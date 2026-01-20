@@ -12,7 +12,7 @@ export interface Room {
   id: string;
   code: string;
   host: string;
-  players: User[];
+  players?: User[];
   gameState: 'waiting' | 'playing' | 'finished';
   currentRound: number;
   maxRounds: number;

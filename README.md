@@ -1,81 +1,154 @@
-# 🎨 你画我猜 - 远程联机游戏
+# 🎨 你画我猜游戏 (Draw & Guess Game)
 
-一款高品质的实时在线绘画猜测游戏，具有温馨的UI设计、发光渐变和毛玻璃特效。
+一个有趣的实时你画我猜游戏，使用React、TypeScript和Tailwind CSS构建，支持多人联机。
 
-## ✨ 功能特性
+## 🚀 功能特性
 
-- **🎮 实时联机**：与朋友一起在线游戏，支持2-6个玩家
-- **🎨 创意绘画**：使用Canvas绘画功能，支持多种笔刷和颜色
-- **💬 实时聊天**：与其他玩家实时聊天和猜测
-- **🏆 计分系统**：实时排行榜，追踪得分
-- **⏱️ 轮流作画**：自动轮流切换绘画者
-- **📚 丰富词库**：500+词汇库，分难度等级
-- **🎵 音效系统**：背景音乐和交互音效
-- **📱 响应式设计**：适配各种屏幕尺寸
-- **🌈 温馨UI**：发光渐变、毛玻璃特效、柔和配色
+- ✅ 实时绘画同步
+- ✅ 多人聊天系统
+- ✅ 房间创建与加入
+- ✅ 排行榜系统
+- ✅ 响应式设计
+- ✅ 现代化UI设计
+- ✅ Socket.io实时通信
 
-## 🚀 快速开始
+## 📋 技术栈
 
-### 1. 本地开发
+### 前端
+- **React 19** - UI框架
+- **TypeScript** - 类型安全
+- **Tailwind CSS 4** - 样式框架
+- **Vite** - 构建工具
+- **Socket.io-client** - 实时通信客户端
+
+### 后端
+- **Node.js** - 运行环境
+- **Express** - Web框架
+- **Socket.io** - 实时通信服务器
+
+## 🔧 本地开发
+
+### 1. 安装依赖
 
 ```bash
-# 安装依赖
 npm install
-
-# 启动开发服务器
-npm run dev
-
-# 访问 http://localhost:5173
 ```
 
-### 2. Firebase配置（可选，用于多设备联机）
-
-如果你想使用远程Firebase实现跨设备实时同步：
-
-1. 访问 [Firebase Console](https://console.firebase.google.com)
-2. 创建新项目
-3. 启用 Realtime Database
-4. 复制配置信息
-5. 创建 `.env.local` 文件并填入Firebase配置
-
-### 3. 部署到GitHub Pages
+### 2. 运行开发服务器
 
 ```bash
-# 构建生产版本
-npm run build
-
-# 部署文件在 dist/ 目录
+npm run dev
 ```
 
-## 📖 游戏规则
+应用将在 `http://localhost:5178` 启动
 
-1. **创建或加入房间** - 房主创建房间，其他玩家通过邀请码加入
-2. **等待准备** - 所有玩家在大厅中准备好后，房主开始游戏
-3. **轮流作画** - 随机选择绘画者，其他玩家猜测
-4. **猜词** - 观看绘画，在聊天框中输入猜测
-5. **计分** - 猜对得分，继续下一轮
+### 3. 本地测试联机功能
 
-## 🛠️ 技术栈
+1. 打开多个浏览器窗口
+2. 访问 `http://localhost:5178`
+3. 创建或加入房间
+4. 开始绘画和聊天
 
-- React 18 + TypeScript
-- Tailwind CSS
-- Canvas API
-- Firebase Realtime Database
-- Howler.js
+## 🎯 部署指南
 
-## 📁 项目结构
+### 前端部署（GitHub Pages）
+
+前端代码自动部署到GitHub Pages：
+
+1. 推送代码到 `master` 分支
+2. GitHub Actions 自动构建和部署
+3. 访问 `https://your-username.github.io/draw-guess-game/`
+
+### 后端部署（Socket.io服务器）
+
+#### 方法1：使用Vercel部署
+
+1. **创建Vercel账户**：访问 https://vercel.com
+2. **连接GitHub仓库**：在Vercel中导入 `draw-guess-game` 仓库
+3. **配置构建设置**：
+   - 框架预设：`Other`
+   - 构建命令：`npm run build`
+   - 输出目录：`dist`
+4. **部署完成**：获取Vercel提供的URL
+
+#### 方法2：使用Render部署
+
+1. **创建Render账户**：访问 https://render.com
+2. **创建Web服务**：
+   - 选择 `Node.js`
+   - 连接GitHub仓库
+   - 设置环境：
+     - Build Command: `npm install`
+     - Start Command: `node server.js`
+3. **部署完成**：获取Render提供的URL
+
+### 4. 配置Socket服务器地址
+
+修改 `src/utils/socket.ts` 中的服务器URL：
+
+```typescript
+// 默认服务器地址
+const defaultServerUrl = 'https://your-server-url';
+```
+
+## 📝 项目结构
 
 ```
 draw-guess-game/
 ├── src/
-│   ├── components/       # React组件
-│   ├── data/            # 数据文件
-│   ├── hooks/           # 自定义hooks
-│   ├── types/           # TypeScript类型
-│   ├── utils/           # 工具函数
-│   └── App.tsx          # 主应用
+│   ├── components/        # 组件
+│   │   ├── Canvas/        # 绘画画布
+│   │   ├── Chat/          # 聊天功能
+│   │   ├── Game/          # 游戏核心
+│   │   ├── Room/          # 房间管理
+│   │   └── UI/            # UI组件
+│   ├── data/              # 数据
+│   ├── types/             # TypeScript类型
+│   ├── utils/             # 工具函数
+│   │   ├── gameLogic.ts   # 游戏逻辑
+│   │   ├── socket.ts      # Socket通信
+│   │   └── firebase.ts    # Firebase配置
+│   ├── App.tsx            # 主应用
+│   └── main.tsx           # 入口文件
+├── server.js              # Socket.io服务器
+├── vite.config.ts         # Vite配置
+├── tailwind.config.js     # Tailwind配置
+└── package.json           # 项目配置
 ```
 
----
+## 🎮 游戏规则
 
-**享受游戏！🎉**
+1. **创建房间**：输入昵称和头像，创建游戏房间
+2. **邀请好友**：分享房间码给好友
+3. **开始游戏**：房间内所有玩家准备后，房主开始游戏
+4. **绘画回合**：
+   - 随机选择一名玩家作为画家
+   - 画家获取一个随机单词
+   - 其他玩家根据绘画猜测单词
+5. **计分规则**：
+   - 第一个猜对的玩家获得最高分
+   - 画家根据猜对人数获得分数
+   - 完成所有回合后，总分最高者获胜
+
+## 🔧 配置说明
+
+### 环境变量
+
+创建 `.env` 文件，配置以下变量：
+
+```env
+# Socket.io服务器地址
+VITE_SOCKET_SERVER_URL=https://your-server-url
+```
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 📄 许可证
+
+MIT License
+
+## 📞 联系方式
+
+如有问题或建议，欢迎通过GitHub Issues联系我。

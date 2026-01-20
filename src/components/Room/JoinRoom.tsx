@@ -3,7 +3,7 @@ import GlassCard from '../UI/GlassCard';
 import GlowButton from '../UI/GlowButton';
 
 interface JoinRoomProps {
-  onJoinRoom: (code: string) => void;
+  onJoinRoom: (code: string) => Promise<void>;
   onBack: () => void;
   error?: string;
 }
@@ -11,15 +11,15 @@ interface JoinRoomProps {
 export default function JoinRoom({ onJoinRoom, onBack, error }: JoinRoomProps) {
   const [code, setCode] = useState('');
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (code.trim().length === 6) {
-      onJoinRoom(code.toUpperCase());
+      await onJoinRoom(code.toUpperCase());
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleJoin();
+  const handleKeyPress = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && code.length === 6) {
+      await handleJoin();
     }
   };
 

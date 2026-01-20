@@ -3,7 +3,7 @@ import GlassCard from '../UI/GlassCard';
 import GlowButton from '../UI/GlowButton';
 
 interface CreateRoomProps {
-  onCreateRoom: (roomName: string, maxRounds: number, roundDuration: number) => void;
+  onCreateRoom: (roomName: string, maxRounds: number, roundDuration: number) => Promise<void>;
   onBack: () => void;
 }
 
@@ -13,12 +13,16 @@ export default function CreateRoom({ onCreateRoom, onBack }: CreateRoomProps) {
   const [roundDuration, setRoundDuration] = useState(60);
   const [error, setError] = useState('');
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!roomName.trim()) {
       setError('请输入房间名称');
       return;
     }
-    onCreateRoom(roomName, maxRounds, roundDuration);
+    try {
+      await onCreateRoom(roomName, maxRounds, roundDuration);
+    } catch (err: any) {
+      setError(err.message || '创建房间失败');
+    }
   };
 
   return (
