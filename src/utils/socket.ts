@@ -10,7 +10,7 @@ let socket: Socket | null = null;
 let isConnected = false;
 
 // 连接服务器
-export function connectSocketServer(url: string = 'https://draw-guess-game-server.vercel.app') {
+export function connectSocketServer(url: string = 'https://draw-guess-game.onrender.com') {
   if (socket) {
     socket.disconnect();
   }
