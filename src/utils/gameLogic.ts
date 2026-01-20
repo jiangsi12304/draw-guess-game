@@ -106,7 +106,7 @@ export function getAvatarEmoji(index: number): string {
 }
 
 // 获取随机单词
-export function getRandomWord(difficulty?: 'easy' | 'normal' | 'hard'): { word: string } {
+export function getRandomWord(_difficulty?: 'easy' | 'normal' | 'hard'): { word: string } {
   // 这里简化处理，实际应该从 wordBank 获取
   return { word: '苹果' };
 }
