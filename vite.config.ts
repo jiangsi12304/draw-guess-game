@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/draw-guess-game/',
   build: {
-    outDir: 'dist',
+    outDir: 'docs',
     sourcemap: false,
     rollupOptions: {
       output: {
