@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import UserSetup from './components/Room/UserSetup';
 import Menu from './components/Room/Menu';
@@ -6,10 +6,17 @@ import CreateRoom from './components/Room/CreateRoom';
 import JoinRoom from './components/Room/JoinRoom';
 import Lobby from './components/Room/Lobby';
 import GameBoard from './components/Game/GameBoard';
-import type { User, Room, ChatMessage, GameState } from './types';
-import { generateId, generateRoomCode, getAvatarEmoji, getRandomWord, checkAnswer } from './utils/gameLogic';
-import { roomsService, gameStateService } from './services/firebase';
-import { useFirebaseRoom, useFirebaseGameState, useFirebaseMessages } from './hooks/useFirebase';
+import type { Room, ChatMessage, GameState, DrawingAction } from './types';
+import { generateId, generateRoomCode, getAvatarEmoji } from './utils/gameLogic';
+import { 
+  connectSocketServer, 
+  onSocketEvent,
+  createSocketRoom,
+  joinSocketRoom,
+  startSocketGame,
+  sendSocketChatMessage,
+  leaveSocketRoom
+} from './utils/socket';
 
 type AppState =
   | 'setup'
@@ -36,10 +43,10 @@ function App() {
   const [roundNumber, setRoundNumber] = useState(1);
   const [maxRounds, setMaxRounds] = useState(5);
 
-  // Firebase hooks
-  const { currentRoom, updateRoom } = useFirebaseRoom(roomCode);
-  const { gameState, updateGameState } = useFirebaseGameState(roomCode);
-  const { messages, sendMessage, clearMessages } = useFirebaseMessages(roomCode);
+  // 本地状态替代 Firebase
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // 用户设置完成
   const handleUserSetup = (nickname: string, avatarIndex: number) => {
@@ -49,205 +56,86 @@ function App() {
   };
 
   // 创建房间
-  const handleCreateRoom = async (_roomName: string, maxRounds: number, roundDuration: number) => {
+  const handleCreateRoom = async (_roomName: string, maxRounds: number, _roundDuration: number) => {
     const newRoomCode = generateRoomCode();
-    const newRoom: Room = {
-      id: generateId(),
-      code: newRoomCode,
-      host: userId,
-      gameState: 'waiting',
-      currentRound: 0,
-      maxRounds: maxRounds,
-      createdAt: Date.now(),
-    };
 
-    try {
-      // 创建房间
-      await roomsService.createRoom(newRoomCode, newRoom);
+    // 创建房间
+    createSocketRoom(newRoomCode, userId);
 
-      // 加入房间
-      const player: User = {
-        id: userId,
-        nickname: userNickname,
-        avatar: getAvatarEmoji(userAvatarIndex),
-        score: 0,
-        isReady: false,
-      };
-      await roomsService.joinRoom(newRoomCode, player);
+    // 加入房间
+    joinSocketRoom(newRoomCode, userId);
 
-      // 初始化游戏状态
-      const initialGameState: GameState = {
-        currentDrawer: '',
-        currentWord: '',
-        roundStartTime: 0,
-        roundDuration: roundDuration,
-        scores: { [userId]: 0 },
-        guessedBy: [],
-      };
-      await gameStateService.initGameState(newRoomCode, initialGameState);
-
-      setRoomCode(newRoomCode);
-      setMaxRounds(maxRounds);
-      setAppState('lobby');
-    } catch (err: any) {
-      setJoinError(err.message);
-    }
+    setRoomCode(newRoomCode);
+    setMaxRounds(maxRounds);
+    setAppState('lobby');
   };
 
   // 加入房间
   const handleJoinRoom = async (code: string) => {
-    try {
-      const room = await roomsService.getRoom(code);
-      if (!room) {
-        setJoinError('房间不存在或已关闭');
-        return;
-      }
-
-      const players = room.players ? Object.values(room.players) : [];
-      if (players.length >= 6) {
-        setJoinError('房间已满');
-        return;
-      }
-
-      const newPlayer: User = {
-        id: userId,
-        nickname: userNickname,
-        avatar: getAvatarEmoji(userAvatarIndex),
-        score: 0,
-        isReady: false,
-      };
-
-      await roomsService.joinRoom(code, newPlayer);
-
-      // 更新游戏状态中的分数
-      if (gameState) {
-        await updateGameState({
-          scores: { ...gameState.scores, [userId]: 0 },
-        });
-      }
-
+    // 加入房间
+    const success = joinSocketRoom(code, userId);
+    if (success) {
       setRoomCode(code);
       setAppState('lobby');
-    } catch (err: any) {
-      setJoinError(err.message);
+    } else {
+      setJoinError('加入房间失败，请重试');
     }
   };
 
   // 开始游戏
-  const handleStartGame = async () => {
-    if (!currentRoom || !gameState) return;
+  const handleStartGame = () => {
+    if (!currentRoom || !roomCode) return;
 
-    // 随机选择第一个绘画者
-    const players = currentRoom.players || [];
-    const firstDrawerId = players[Math.floor(Math.random() * players.length)]?.id;
-    const word = getRandomWord('normal');
-
-    try {
-      await updateRoom({ gameState: 'playing' });
-
-      await updateGameState({
-        currentDrawer: firstDrawerId,
-        currentWord: word.word,
-        roundStartTime: Date.now(),
-        roundDuration: gameState.roundDuration,
-        scores: gameState.scores,
-        guessedBy: [],
-      });
-
-      setRoundNumber(1);
-      await clearMessages();
-      setAppState('playing');
-    } catch (err: any) {
-      setJoinError(err.message);
-    }
+    // 发送开始游戏命令
+    startSocketGame(roomCode);
+    setRoundNumber(1);
+    setMessages([]);
+    setAppState('playing');
   };
 
   // 发送聊天消息
-  const handleSendMessage = async (text: string) => {
-    if (!gameState) return;
+  const handleSendMessage = (text: string) => {
+    if (!gameState || !roomCode) return;
 
-    const { isCorrect } = checkAnswer(text, gameState.currentWord);
-    const message: Omit<ChatMessage, 'timestamp'> = {
+    const message: ChatMessage = {
       id: generateId(),
       userId,
       username: userNickname,
       text,
-      isCorrect: isCorrect && userId !== gameState.currentDrawer,
+      isCorrect: false,
+      timestamp: Date.now(),
     };
 
-    try {
-      await sendMessage(message);
-
-      // 如果猜对了
-      if (isCorrect && userId !== gameState.currentDrawer) {
-        const newScores = { ...gameState.scores };
-        newScores[userId] = (newScores[userId] || 0) + 50;
-        await updateGameState({
-          scores: newScores,
-          guessedBy: [...gameState.guessedBy, userId],
-        });
-      }
-    } catch (err: any) {
-      setJoinError(err.message);
-    }
+    // 发送消息到服务器
+    sendSocketChatMessage(roomCode, message);
   };
 
   // 轮次时间结束
-  const handleTimeUp = async () => {
-    // 切换到下一个绘画者
-    if (!currentRoom || !gameState) return;
+  const handleTimeUp = () => {
+    if (!currentRoom || !gameState || !roomCode) return;
 
-    const playerIds = (currentRoom.players || []).map((p: any) => p.id);
-    const currentDrawerIndex = playerIds.indexOf(gameState.currentDrawer);
-    const nextDrawerIndex = (currentDrawerIndex + 1) % playerIds.length;
-    const nextDrawerId = playerIds[nextDrawerIndex];
-
-    try {
-      if (roundNumber >= maxRounds) {
-        // 游戏结束
-        setAppState('gameEnd');
-      } else {
-        // 下一轮
-        const word = getRandomWord('normal');
-        await updateGameState({
-          currentDrawer: nextDrawerId,
-          currentWord: word.word,
-          roundStartTime: Date.now(),
-          guessedBy: [],
-        });
-        setRoundNumber(prev => prev + 1);
-        await clearMessages();
-      }
-    } catch (err: any) {
-      setJoinError(err.message);
+    if (roundNumber >= maxRounds) {
+      // 游戏结束
+      setAppState('gameEnd');
+    } else {
+      // 下一轮
+      setRoundNumber(prev => prev + 1);
+      setMessages([]);
     }
   };
 
   // 离开房间
-  const handleLeaveRoom = async () => {
-    if (!currentRoom || !roomCode) return;
+  const handleLeaveRoom = () => {
+    if (!roomCode) return;
 
-    try {
-      await roomsService.removePlayer(roomCode, userId);
+    // 发送离开房间命令
+    leaveSocketRoom(roomCode, userId);
 
-      // 检查是否还有玩家，如果没有则删除房间
-      const updatedRoom = await roomsService.getRoom(roomCode);
-      const remainingPlayers = updatedRoom?.players ? Object.values(updatedRoom.players) : [];
-
-      if (remainingPlayers.length === 0) {
-        // 删除房间
-        await roomsService.deleteRoom(roomCode);
-      } else if (updatedRoom.host === userId) {
-        // 房主离开，转移给第一个玩家
-        const newHost = (remainingPlayers[0] as any).id;
-        await updateRoom({ host: newHost });
-      }
-
-      setRoomCode(null);
-      setAppState('menu');
-    } catch (err: any) {
-      setJoinError(err.message);
-    }
+    setRoomCode(null);
+    setCurrentRoom(null);
+    setGameState(null);
+    setMessages([]);
+    setAppState('menu');
   };
 
   // 渲染不同的应用状态
@@ -294,7 +182,7 @@ function App() {
         return currentRoom ? (
           <Lobby
             roomCode={currentRoom.code}
-            players={currentRoom.players}
+            players={currentRoom.players || []}
             currentUserId={userId}
             isHost={currentRoom.host === userId}
             onStartGame={handleStartGame}
@@ -323,6 +211,41 @@ function App() {
         return null;
     }
   };
+
+  // Socket.io 连接和事件监听
+  useEffect(() => {
+    // 连接 Socket.io 服务器
+    connectSocketServer();
+
+    // 监听房间更新
+    const unsubscribeRoomUpdate = onSocketEvent('room-updated', (updatedRoom: Room) => {
+      setCurrentRoom(updatedRoom);
+    });
+
+    // 监听游戏状态更新
+    const unsubscribeGameStateUpdate = onSocketEvent('game-state-updated', (updatedGameState: GameState) => {
+      setGameState(updatedGameState);
+    });
+
+    // 监听聊天消息
+    const unsubscribeChatMessage = onSocketEvent('chat-message', (message: ChatMessage) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    // 监听绘画动作
+    const unsubscribeDrawingAction = onSocketEvent('drawing-action', (action: DrawingAction) => {
+      // 这里可以添加绘画动作处理逻辑
+      console.log('Received drawing action:', action);
+    });
+
+    return () => {
+      // 清理所有事件监听器
+      unsubscribeRoomUpdate();
+      unsubscribeGameStateUpdate();
+      unsubscribeChatMessage();
+      unsubscribeDrawingAction();
+    };
+  }, []);
 
   return <div className="w-full min-h-screen">{render()}</div>;
 }
