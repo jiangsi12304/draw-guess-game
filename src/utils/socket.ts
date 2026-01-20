@@ -1,7 +1,7 @@
 // Socket.io通信工具
 // 用于处理客户端与服务器的实时通信
 import { io, Socket } from 'socket.io-client';
-import type { ChatMessage, DrawingAction, User, Room } from '../types';
+import type { ChatMessage, DrawingAction } from '../types';
 
 // Socket实例
 let socket: Socket | null = null;
