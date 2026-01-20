@@ -1,10 +1,10 @@
 // Socket.io服务器
 // 用于处理你画我猜游戏的实时通信
 
-const express = require('express');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
 
 // 创建Express应用
 const app = express();
