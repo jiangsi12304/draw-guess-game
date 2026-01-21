@@ -32,9 +32,45 @@ export default function Lobby({
   const isCurrentPlayerReady = currentPlayer?.isReady ?? false;
 
   const copyCode = () => {
-    navigator.clipboard.writeText(roomCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      // 尝试使用 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(roomCode).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }).catch(() => {
+          // 降级方案：使用 document.execCommand
+          fallbackCopy();
+        });
+      } else {
+        // 降级方案：使用 document.execCommand
+        fallbackCopy();
+      }
+    } catch (err) {
+      console.error('复制失败:', err);
+      // 降级方案：使用 document.execCommand
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = roomCode;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error('降级复制失败:', err);
+    }
   };
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
