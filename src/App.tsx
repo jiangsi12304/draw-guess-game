@@ -6,6 +6,8 @@ import CreateRoom from './components/Room/CreateRoom';
 import JoinRoom from './components/Room/JoinRoom';
 import Lobby from './components/Room/Lobby';
 import GameBoard from './components/Game/GameBoard';
+import GlowButton from './components/UI/GlowButton';
+import GlassCard from './components/UI/GlassCard';
 import type { Room, ChatMessage, GameState, DrawingAction } from './types';
 import { generateId, generateRoomCode, getAvatarEmoji } from './utils/gameLogic';
 import {
@@ -48,6 +50,7 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [revealedWord, setRevealedWord] = useState<string | null>(null);
 
   // 用户设置完成
   const handleUserSetup = (nickname: string, avatarIndex: number) => {
@@ -202,7 +205,54 @@ function App() {
             onTimeUp={handleTimeUp}
             scores={gameState.scores || {}}
             roomCode={roomCode || undefined}
+            revealedWord={revealedWord}
           />
+        ) : null;
+
+      case 'gameEnd':
+        return currentRoom ? (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <GlassCard className="w-full max-w-2xl text-center space-y-6">
+              <h2 className="text-4xl font-display font-bold gradient-text">🏆 游戏结束</h2>
+
+              <div className="space-y-4">
+                {currentRoom.players
+                  .sort((a, b) => (gameState?.scores?.[b.id] || 0) - (gameState?.scores?.[a.id] || 0))
+                  .map((player, index) => (
+                    <div
+                      key={player.id}
+                      className={`p-4 rounded-lg flex items-center justify-between ${
+                        index === 0
+                          ? 'bg-gradient-to-r from-yellow-400/30 to-orange-400/30 border-2 border-yellow-400'
+                          : 'bg-glass-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{player.avatar}</span>
+                        <div className="text-left">
+                          <p className="font-bold text-white text-xl">
+                            {index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}
+                            {player.nickname}
+                          </p>
+                          {player.id === userId && (
+                            <p className="text-sm text-gray-300">（你）</p>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-white">
+                        {gameState?.scores?.[player.id] || 0} 分
+                      </p>
+                    </div>
+                  ))}
+              </div>
+
+              <div className="flex gap-3">
+                <GlowButton onClick={handleLeaveRoom} className="flex-1">
+                  返回菜单
+                </GlowButton>
+              </div>
+            </GlassCard>
+          </div>
         ) : null;
 
       default:
@@ -246,6 +296,15 @@ function App() {
       setCurrentRoom(endedRoom);
     });
 
+    // 监听答案揭晓
+    const unsubscribeAnswerRevealed = onSocketEvent('answer-revealed', (data: { word: string, correct: boolean }) => {
+      setRevealedWord(data.word);
+      // 3秒后隐藏答案
+      setTimeout(() => {
+        setRevealedWord(null);
+      }, 3000);
+    });
+
     // 监听聊天消息
     const unsubscribeChatMessage = onSocketEvent('new-chat-message', (message: ChatMessage) => {
       setMessages(prev => [...prev, message]);
@@ -264,6 +323,7 @@ function App() {
       unsubscribeGameStateUpdate();
       unsubscribeNewRound();
       unsubscribeGameEnded();
+      unsubscribeAnswerRevealed();
       unsubscribeChatMessage();
       unsubscribeDrawingAction();
     };

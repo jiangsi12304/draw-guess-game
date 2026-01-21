@@ -20,6 +20,7 @@ interface GameBoardProps {
   onTimeUp: () => void;
   scores: Record<string, number>;
   roomCode?: string;
+  revealedWord?: string | null;
 }
 
 export default function GameBoard({
@@ -35,6 +36,7 @@ export default function GameBoard({
   onTimeUp,
   scores,
   roomCode,
+  revealedWord,
 }: GameBoardProps) {
   const isDrawer = currentUserId === currentDrawerId;
   const currentDrawer = players.find(p => p.id === currentDrawerId);
@@ -57,6 +59,19 @@ export default function GameBoard({
 
   return (
     <div className="min-h-screen p-4 space-y-4">
+      {/* 答案揭晓提示 */}
+      {revealedWord && (
+        <GlassCard className="bg-gradient-to-r from-yellow-400/20 to-orange-400/20 border-2 border-yellow-400">
+          <div className="text-center py-4">
+            <p className="text-lg font-bold text-yellow-300 mb-2">
+              {revealedWord ? '答案揭晓！' : '答案揭晓！'}
+            </p>
+            <p className="text-3xl font-bold text-white">{revealedWord}</p>
+            <p className="text-sm text-gray-300 mt-2">即将进入下一题...</p>
+          </div>
+        </GlassCard>
+      )}
+
       {/* 头部信息 */}
       <GlassCard className="flex items-center justify-between">
         <div>

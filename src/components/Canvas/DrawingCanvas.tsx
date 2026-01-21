@@ -51,10 +51,20 @@ export default function DrawingCanvas({
 
     // 如果不是绘画者，监听绘画动作
     if (!isDrawer && roomCode) {
-      const unsubscribe = onSocketEvent('new-drawing-action', (action: DrawingAction) => {
+      const unsubscribeDrawing = onSocketEvent('new-drawing-action', (action: DrawingAction) => {
         handleRemoteAction(action, ctx);
       });
-      return unsubscribe;
+
+      // 监听新轮次开始，清空画布
+      const unsubscribeNewRound = onSocketEvent('new-round', () => {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+      });
+
+      return () => {
+        unsubscribeDrawing();
+        unsubscribeNewRound();
+      };
     }
   }, [width, height, isDrawer, roomCode]);
 

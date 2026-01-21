@@ -168,6 +168,7 @@ io.on('connection', (socket) => {
           if (message.text.trim().toLowerCase() === gameState.currentWord.toLowerCase()) {
             // 猜对了
             message.isCorrect = true;
+            message.revealWord = gameState.currentWord;
 
             // 计算分数（基于剩余时间）
             const timeElapsed = (Date.now() - gameState.roundStartTime) / 1000;
@@ -182,14 +183,16 @@ io.on('connection', (socket) => {
               gameState.guessedBy.push(message.userId);
             }
 
-            // 如果所有人都猜对了，提前结束本轮
-            const guessers = room.players.filter(p => p.id !== gameState.currentDrawer);
-            if (gameState.guessedBy.length >= guessers.length) {
-              // 延迟2秒后开始下一轮
-              setTimeout(() => {
-                startNewRound(roomCode);
-              }, 2000);
-            }
+            // 显示答案，然后3秒后开始下一轮
+            io.to(roomCode).emit('answer-revealed', { word: gameState.currentWord, correct: true });
+
+            // 延迟3秒后开始下一轮
+            setTimeout(() => {
+              startNewRound(roomCode);
+            }, 3000);
+          } else {
+            // 猜错了，但不显示答案（因为还有其他人可以猜）
+            message.isCorrect = false;
           }
         }
       }
@@ -255,7 +258,7 @@ io.on('connection', (socket) => {
       currentDrawer: nextDrawer.id,
       currentWord: currentWord,
       roundStartTime: Date.now(),
-      roundDuration: 60,
+      roundDuration: 30, // 30秒
       scores: oldGameState.scores,
       guessedBy: []
     };
@@ -288,12 +291,13 @@ io.on('connection', (socket) => {
 
     if (!gameState) return;
 
-    // 检查是否所有人都猜对了
-    const guessers = room.players.filter(p => p.id !== gameState.currentDrawer);
-    if (gameState.guessedBy.length >= guessers.length) {
-      // 所有人都猜对了，开始新轮次
+    // 显示答案
+    io.to(roomCode).emit('answer-revealed', { word: gameState.currentWord, correct: false });
+
+    // 延迟3秒后开始下一轮
+    setTimeout(() => {
       startNewRound(roomCode);
-    }
+    }, 3000);
   }
   
   // 监听发送绘画动作
@@ -333,7 +337,7 @@ io.on('connection', (socket) => {
         currentDrawer: drawer.id,
         currentWord: currentWord,
         roundStartTime: Date.now(),
-        roundDuration: 60, // 60秒
+        roundDuration: 30, // 30秒
         scores: {},
         guessedBy: []
       };
