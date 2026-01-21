@@ -10,6 +10,7 @@ interface LobbyProps {
   isHost: boolean;
   onStartGame: () => void;
   onLeave: () => void;
+  onToggleReady?: (ready: boolean) => void;
 }
 
 export default function Lobby({
@@ -19,8 +20,13 @@ export default function Lobby({
   isHost,
   onStartGame,
   onLeave,
+  onToggleReady,
 }: LobbyProps) {
   const [copied, setCopied] = useState(false);
+
+  // 获取当前用户的准备状态
+  const currentPlayer = players.find(p => p.id === currentUserId);
+  const isCurrentPlayerReady = currentPlayer?.isReady ?? false;
 
   const copyCode = () => {
     navigator.clipboard.writeText(roomCode);
@@ -102,6 +108,15 @@ export default function Lobby({
 
         {/* 控制按钮 */}
         <div className="flex gap-3">
+          {!isHost && (
+            <GlowButton
+              variant={isCurrentPlayerReady ? "primary" : "secondary"}
+              onClick={() => onToggleReady?.(!isCurrentPlayerReady)}
+              className="flex-1"
+            >
+              {isCurrentPlayerReady ? '✅ 已准备' : '⏳ 准备游戏'}
+            </GlowButton>
+          )}
           <GlowButton
             variant="secondary"
             onClick={onLeave}

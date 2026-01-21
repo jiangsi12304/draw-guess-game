@@ -8,14 +8,15 @@ import Lobby from './components/Room/Lobby';
 import GameBoard from './components/Game/GameBoard';
 import type { Room, ChatMessage, GameState, DrawingAction } from './types';
 import { generateId, generateRoomCode, getAvatarEmoji } from './utils/gameLogic';
-import { 
-  connectSocketServer, 
+import {
+  connectSocketServer,
   onSocketEvent,
   createSocketRoom,
   joinSocketRoom,
   startSocketGame,
   sendSocketChatMessage,
-  leaveSocketRoom
+  leaveSocketRoom,
+  readySocketGame
 } from './utils/socket';
 
 type AppState =
@@ -91,6 +92,12 @@ function App() {
     setRoundNumber(1);
     setMessages([]);
     setAppState('playing');
+  };
+
+  // 切换准备状态
+  const handleToggleReady = (isReady: boolean) => {
+    if (!roomCode) return;
+    readySocketGame(roomCode, userId, isReady);
   };
 
   // 发送聊天消息
@@ -187,6 +194,7 @@ function App() {
             isHost={currentRoom.host === userId}
             onStartGame={handleStartGame}
             onLeave={handleLeaveRoom}
+            onToggleReady={handleToggleReady}
           />
         ) : null;
 
