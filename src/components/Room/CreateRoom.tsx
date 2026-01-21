@@ -6,9 +6,10 @@ import { wordBank } from '../../data/wordBank';
 interface CreateRoomProps {
   onCreateRoom: (roomName: string, maxRounds: number, roundDuration: number, difficulty: 'easy' | 'normal' | 'hard' | 'all', customWords?: string[]) => Promise<void>;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
-export default function CreateRoom({ onCreateRoom, onBack }: CreateRoomProps) {
+export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: CreateRoomProps) {
   const [roomName, setRoomName] = useState('');
   const [maxRounds, setMaxRounds] = useState(5);
   const [roundDuration, setRoundDuration] = useState(60);
@@ -52,6 +53,16 @@ export default function CreateRoom({ onCreateRoom, onBack }: CreateRoomProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-8 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+            <p className="text-white text-xl font-semibold">正在创建房间...</p>
+          </div>
+        </div>
+      )}
+
       <GlassCard className="w-full max-w-md space-y-6">
         <h2 className="text-3xl font-display font-bold text-white text-center">
           创建新房间

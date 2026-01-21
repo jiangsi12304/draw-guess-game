@@ -21,7 +21,8 @@ import {
   leaveSocketRoom,
   readySocketGame,
   selectSocketWord,
-  kickSocketPlayer
+  kickSocketPlayer,
+  getSocketConnectionStatus
 } from './utils/socket';
 
 type AppState =
@@ -64,31 +65,60 @@ function App() {
 
   // 创建房间
   const handleCreateRoom = async (_roomName: string, maxRounds: number, roundDuration: number, difficulty: 'easy' | 'normal' | 'hard' | 'all', customWords?: string[]) => {
+    // 检查 Socket 连接状态
+    if (!getSocketConnectionStatus()) {
+      alert(`❌ 无法连接到服务器
+
+请检查：
+1. Socket 服务器是否正在运行
+2. 网络连接是否正常
+3. 防火墙是否阻止连接`);
+      return;
+    }
+
     const newRoomCode = generateRoomCode();
 
     // 创建房间
-    createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex), {
+    const created = createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex), {
       maxRounds,
       roundDuration,
       difficulty,
       customWords
     });
 
+    if (!created) {
+      alert('❌ 创建房间失败，请重试');
+      return;
+    }
+
     // 加入房间
-    joinSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
+    const joined = joinSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
+    
+    if (!joined) {
+      alert('❌ 加入房间失败，请重试');
+      return;
+    }
 
     setRoomCode(newRoomCode);
     setMaxRounds(maxRounds);
-    setAppState('lobby');
+    // 不在这里设置 appState，等待 room-updated 事件后再设置
   };
 
   // 加入房间
   const handleJoinRoom = async (code: string) => {
+    // 检查 Socket 连接状态
+    if (!getSocketConnectionStatus()) {
+      setJoinError('无法连接到服务器，请检查网络连接');
+      return;
+    }
+
+    setJoinError('');
+
     // 加入房间
     const success = joinSocketRoom(code, userId, userNickname, getAvatarEmoji(userAvatarIndex));
     if (success) {
       setRoomCode(code);
-      setAppState('lobby');
+      // 不在这里设置 appState，等待 room-updated 事件后再设置
     } else {
       setJoinError('加入房间失败，请重试');
     }

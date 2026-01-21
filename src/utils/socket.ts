@@ -9,8 +9,8 @@ let socket: Socket | null = null;
 // 连接状态
 let isConnected = false;
 
-// 连接服务器 - 默认使用本地开发服务器
-export function connectSocketServer(url: string = 'http://localhost:10000') {
+// 连接服务器 - 默认使用 Render 部署服务器
+export function connectSocketServer(url: string = import.meta.env.VITE_SOCKET_SERVER_URL || 'https://draw-guess-game.onrender.com') {
   if (socket) {
     socket.disconnect();
   }
