@@ -216,7 +216,7 @@ function App() {
               <h2 className="text-4xl font-display font-bold gradient-text">🏆 游戏结束</h2>
 
               <div className="space-y-4">
-                {currentRoom.players
+                {(currentRoom.players || [])
                   .sort((a, b) => (gameState?.scores?.[b.id] || 0) - (gameState?.scores?.[a.id] || 0))
                   .map((player, index) => (
                     <div
