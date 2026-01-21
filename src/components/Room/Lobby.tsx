@@ -11,6 +11,7 @@ interface LobbyProps {
   onStartGame: () => void;
   onLeave: () => void;
   onToggleReady?: (ready: boolean) => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export default function Lobby({
@@ -21,8 +22,10 @@ export default function Lobby({
   onStartGame,
   onLeave,
   onToggleReady,
+  onKickPlayer,
 }: LobbyProps) {
   const [copied, setCopied] = useState(false);
+  const [showKickConfirm, setShowKickConfirm] = useState<string | null>(null);
 
   // 获取当前用户的准备状态
   const currentPlayer = players.find(p => p.id === currentUserId);
@@ -35,6 +38,16 @@ export default function Lobby({
   };
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
+
+  const handleKickPlayer = (playerId: string) => {
+    if (showKickConfirm === playerId) {
+      onKickPlayer?.(playerId);
+      setShowKickConfirm(null);
+    } else {
+      setShowKickConfirm(playerId);
+      setTimeout(() => setShowKickConfirm(null), 3000); // 3秒后自动取消
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -83,7 +96,7 @@ export default function Lobby({
                     : 'bg-glass-white'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                   <span className="text-3xl">{player.avatar}</span>
                   <div>
                     <p className="font-semibold text-white">{player.nickname}</p>
@@ -92,9 +105,19 @@ export default function Lobby({
                     </p>
                   </div>
                 </div>
-                <span className="text-2xl">
-                  {player.isReady ? '✅' : '⏳'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">
+                    {player.isReady ? '✅' : '⏳'}
+                  </span>
+                  {isHost && player.id !== currentUserId && (
+                    <button
+                      onClick={() => handleKickPlayer(player.id)}
+                      className="text-red-400 hover:text-red-300 text-sm bg-red-400/20 px-2 py-1 rounded"
+                    >
+                      {showKickConfirm === player.id ? '确认踢出？' : '🚫 踢出'}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -10,6 +10,7 @@ import GlowButton from './components/UI/GlowButton';
 import GlassCard from './components/UI/GlassCard';
 import type { Room, ChatMessage, GameState, DrawingAction } from './types';
 import { generateId, generateRoomCode, getAvatarEmoji } from './utils/gameLogic';
+import { soundManager } from './utils/soundManager';
 import {
   connectSocketServer,
   onSocketEvent,
@@ -18,7 +19,9 @@ import {
   startSocketGame,
   sendSocketChatMessage,
   leaveSocketRoom,
-  readySocketGame
+  readySocketGame,
+  selectSocketWord,
+  kickSocketPlayer
 } from './utils/socket';
 
 type AppState =
@@ -60,11 +63,16 @@ function App() {
   };
 
   // 创建房间
-  const handleCreateRoom = async (_roomName: string, maxRounds: number, _roundDuration: number) => {
+  const handleCreateRoom = async (_roomName: string, maxRounds: number, roundDuration: number, difficulty: 'easy' | 'normal' | 'hard' | 'all', customWords?: string[]) => {
     const newRoomCode = generateRoomCode();
 
     // 创建房间
-    createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
+    createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex), {
+      maxRounds,
+      roundDuration,
+      difficulty,
+      customWords
+    });
 
     // 加入房间
     joinSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
@@ -116,6 +124,18 @@ function App() {
 
     // 发送消息到服务器
     sendSocketChatMessage(roomCode, message);
+  };
+
+  // 选择词语
+  const handleWordSelect = (word: string) => {
+    if (!roomCode) return;
+    selectSocketWord(roomCode, userId, word);
+  };
+
+  // 踢出玩家
+  const handleKickPlayer = (playerId: string) => {
+    if (!roomCode) return;
+    kickSocketPlayer(roomCode, userId, playerId);
   };
 
   // 轮次时间结束（实际由服务器控制，这里只是为了满足Timer组件的接口）
@@ -187,6 +207,7 @@ function App() {
             onStartGame={handleStartGame}
             onLeave={handleLeaveRoom}
             onToggleReady={handleToggleReady}
+            onKickPlayer={handleKickPlayer}
           />
         ) : null;
 
@@ -203,9 +224,12 @@ function App() {
             messages={messages}
             onSendMessage={handleSendMessage}
             onTimeUp={handleTimeUp}
+            onWordSelect={handleWordSelect}
             scores={gameState.scores || {}}
             roomCode={roomCode || undefined}
             revealedWord={revealedWord}
+            wordSelectionState={gameState.wordSelectionState || 'drawing'}
+            wordOptions={gameState.wordOptions || []}
           />
         ) : null;
 
@@ -272,6 +296,7 @@ function App() {
 
     // 监听游戏开始
     const unsubscribeGameStarted = onSocketEvent('game-started', (newGameState: GameState) => {
+      soundManager.playGameStart();
       setGameState(newGameState);
       setRoundNumber(1);
       setMessages([]);
@@ -285,6 +310,7 @@ function App() {
 
     // 监听新轮次
     const unsubscribeNewRound = onSocketEvent('new-round', (newGameState: GameState) => {
+      soundManager.playRoundChange();
       setGameState(newGameState);
       setMessages([]);
       setRoundNumber(prev => prev + 1);
@@ -292,12 +318,18 @@ function App() {
 
     // 监听游戏结束
     const unsubscribeGameEnded = onSocketEvent('game-ended', (endedRoom: Room) => {
+      soundManager.playGameEnd();
       setAppState('gameEnd');
       setCurrentRoom(endedRoom);
     });
 
     // 监听答案揭晓
     const unsubscribeAnswerRevealed = onSocketEvent('answer-revealed', (data: { word: string, correct: boolean }) => {
+      if (data.correct) {
+        soundManager.playCorrect();
+      } else {
+        soundManager.playTimeUp();
+      }
       setRevealedWord(data.word);
       // 3秒后隐藏答案
       setTimeout(() => {
@@ -307,7 +339,17 @@ function App() {
 
     // 监听聊天消息
     const unsubscribeChatMessage = onSocketEvent('new-chat-message', (message: ChatMessage) => {
+      // 如果消息来自自己，且答错了，播放错误音效
+      if (message.userId === userId && !message.isCorrect && gameState) {
+        // 只在猜测状态下播放错误音效
+        soundManager.playWrong();
+      }
       setMessages(prev => [...prev, message]);
+    });
+
+    // 监听词语选择
+    const unsubscribeWordSelected = onSocketEvent('word-selected', (data: { word: string, drawerId: string }) => {
+      console.log('词语已选择:', data.word);
     });
 
     // 监听绘画动作
@@ -325,6 +367,7 @@ function App() {
       unsubscribeGameEnded();
       unsubscribeAnswerRevealed();
       unsubscribeChatMessage();
+      unsubscribeWordSelected();
       unsubscribeDrawingAction();
     };
   }, []);

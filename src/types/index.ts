@@ -17,6 +17,9 @@ export interface Room {
   currentRound: number;
   maxRounds: number;
   createdAt: number;
+  difficulty?: 'easy' | 'normal' | 'hard' | 'all';
+  customWords?: string[];
+  roundDuration?: number;
 }
 
 // 游戏状态类型
@@ -27,6 +30,8 @@ export interface GameState {
   roundDuration: number; // 秒
   scores: Record<string, number>;
   guessedBy: string[];
+  wordSelectionState: 'selecting' | 'drawing' | 'guessed'; // 添加词语选择状态
+  wordOptions?: WordItem[]; // 候选词语列表
 }
 
 // 绘画数据类型

@@ -10,7 +10,7 @@ let socket: Socket | null = null;
 let isConnected = false;
 
 // 连接服务器
-export function connectSocketServer(url: string = 'https://draw-guess-game.onrender.com') {
+export function connectSocketServer(url: string = 'https://draw-guess-game-server.onrender.com') {
   if (socket) {
     socket.disconnect();
   }
@@ -78,8 +78,13 @@ export function onSocketEvent(event: string, callback: (data: any) => void) {
 }
 
 // 创建房间
-export function createSocketRoom(roomCode: string, hostId: string, nickname: string, avatar: string) {
-  return sendSocketMessage('create-room', { roomCode, hostId, nickname, avatar });
+export function createSocketRoom(roomCode: string, hostId: string, nickname: string, avatar: string, settings?: {
+  maxRounds?: number;
+  roundDuration?: number;
+  difficulty?: 'easy' | 'normal' | 'hard' | 'all';
+  customWords?: string[];
+}) {
+  return sendSocketMessage('create-room', { roomCode, hostId, nickname, avatar, ...settings });
 }
 
 // 加入房间
@@ -105,6 +110,16 @@ export function startSocketGame(roomCode: string) {
 // 准备游戏
 export function readySocketGame(roomCode: string, userId: string, isReady: boolean) {
   return sendSocketMessage('ready-game', { roomCode, userId, isReady });
+}
+
+// 选择词语
+export function selectSocketWord(roomCode: string, userId: string, word: string) {
+  return sendSocketMessage('select-word', { roomCode, userId, word });
+}
+
+// 踢出玩家
+export function kickSocketPlayer(roomCode: string, hostId: string, playerId: string) {
+  return sendSocketMessage('kick-player', { roomCode, hostId, playerId });
 }
 
 // 离开房间
