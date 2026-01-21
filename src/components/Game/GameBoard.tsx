@@ -19,6 +19,7 @@ interface GameBoardProps {
   onSendMessage: (text: string) => void;
   onTimeUp: () => void;
   scores: Record<string, number>;
+  roomCode?: string;
 }
 
 export default function GameBoard({
@@ -33,6 +34,7 @@ export default function GameBoard({
   onSendMessage,
   onTimeUp,
   scores,
+  roomCode,
 }: GameBoardProps) {
   const isDrawer = currentUserId === currentDrawerId;
   const currentDrawer = players.find(p => p.id === currentDrawerId);
@@ -81,6 +83,7 @@ export default function GameBoard({
             width={600}
             height={500}
             isDrawer={isDrawer}
+            roomCode={roomCode}
           />
         </div>
 

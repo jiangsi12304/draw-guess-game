@@ -153,20 +153,148 @@ io.on('connection', (socket) => {
   // 监听发送聊天消息
   socket.on('send-chat-message', (data) => {
     const { roomCode, message } = data;
-    
+
     if (rooms.has(roomCode)) {
       const room = rooms.get(roomCode);
-      
+      const gameState = room.currentGameState;
+
+      // 检查是否猜对
+      if (room.gameState === 'playing' && gameState) {
+        const sender = room.players.find(p => p.id === message.userId);
+
+        // 如果发送者是绘画者，不算
+        if (sender && sender.id !== gameState.currentDrawer) {
+          // 检查答案是否正确（不区分大小写）
+          if (message.text.trim().toLowerCase() === gameState.currentWord.toLowerCase()) {
+            // 猜对了
+            message.isCorrect = true;
+
+            // 计算分数（基于剩余时间）
+            const timeElapsed = (Date.now() - gameState.roundStartTime) / 1000;
+            const timeRemaining = gameState.roundDuration - timeElapsed;
+            const score = Math.max(10, Math.floor(timeRemaining * 10));
+
+            // 加分
+            gameState.scores[message.userId] = (gameState.scores[message.userId] || 0) + score;
+
+            // 记录猜对的人
+            if (!gameState.guessedBy.includes(message.userId)) {
+              gameState.guessedBy.push(message.userId);
+            }
+
+            // 如果所有人都猜对了，提前结束本轮
+            const guessers = room.players.filter(p => p.id !== gameState.currentDrawer);
+            if (gameState.guessedBy.length >= guessers.length) {
+              // 延迟2秒后开始下一轮
+              setTimeout(() => {
+                startNewRound(roomCode);
+              }, 2000);
+            }
+          }
+        }
+      }
+
       // 添加消息到房间
       room.messages.push(message);
-      
+
       // 发送消息给房间内所有用户
       io.to(roomCode).emit('new-chat-message', message);
-      io.to(roomCode).emit('room-updated', room);
-      
-      console.log('💬 聊天消息:', roomCode, '→', message.text);
+      if (gameState) {
+        io.to(roomCode).emit('game-state-updated', gameState);
+      }
+
+      console.log('💬 聊天消息:', roomCode, '→', message.text, message.isCorrect ? '✅ 正确' : '');
     }
   });
+
+  // 存储轮次定时器
+  const roundTimers = new Map();
+
+  // 开始新轮次
+  function startNewRound(roomCode) {
+    // 清除之前的定时器
+    if (roundTimers.has(roomCode)) {
+      clearTimeout(roundTimers.get(roomCode));
+      roundTimers.delete(roomCode);
+    }
+
+    if (!rooms.has(roomCode)) return;
+
+    const room = rooms.get(roomCode);
+
+    // 检查是否所有轮次都结束了
+    if (room.currentRound >= room.maxRounds) {
+      // 游戏结束
+      room.gameState = 'finished';
+      io.to(roomCode).emit('game-ended', room);
+      io.to(roomCode).emit('room-updated', room);
+      console.log('🏁 游戏结束:', roomCode);
+      return;
+    }
+
+    // 选择下一个绘画者（轮换）
+    const oldGameState = room.currentGameState;
+    const currentDrawerIndex = room.players.findIndex(p => p.id === oldGameState.currentDrawer);
+    const nextDrawerIndex = (currentDrawerIndex + 1) % room.players.length;
+    const nextDrawer = room.players[nextDrawerIndex];
+
+    // 随机选择新单词
+    const words = [
+      '猫', '狗', '鱼', '鸟', '苹果', '香蕉', '钥匙', '椅子',
+      '太阳', '月亮', '足球', '篮球', '医生', '老师', '汽车',
+      '自行车', '房子', '吉他', '钢琴', '开心', '伤心', '跑步',
+      '跳跃', '唱歌', '跳舞', '树', '花', '山', '海', '门', '窗户',
+      '大象', '长颈鹿', '企鹅', '熊猫', '披萨', '汉堡', '寿司',
+      '手机', '电脑', '雨伞', '眼镜', '足球', '篮球', '网球',
+      '消防员', '飞行员', '厨师', '画家', '火车', '飞机', '船'
+    ];
+    const currentWord = words[Math.floor(Math.random() * words.length)];
+
+    // 创建新游戏状态
+    const newGameState = {
+      currentDrawer: nextDrawer.id,
+      currentWord: currentWord,
+      roundStartTime: Date.now(),
+      roundDuration: 60,
+      scores: oldGameState.scores,
+      guessedBy: []
+    };
+
+    // 更新房间
+    room.currentGameState = newGameState;
+    room.currentRound++;
+
+    // 发送新轮次开始事件
+    io.to(roomCode).emit('new-round', newGameState);
+    io.to(roomCode).emit('game-state-updated', newGameState);
+    io.to(roomCode).emit('room-updated', room);
+
+    console.log('🔄 新轮次:', roomCode, '- 第', room.currentRound, '轮', '- 绘画者:', nextDrawer.nickname, '- 单词:', currentWord);
+
+    // 设置定时器检查时间结束
+    const timer = setTimeout(() => {
+      checkRoundEnd(roomCode);
+    }, newGameState.roundDuration * 1000);
+
+    roundTimers.set(roomCode, timer);
+  }
+
+  // 检查轮次是否结束
+  function checkRoundEnd(roomCode) {
+    if (!rooms.has(roomCode)) return;
+
+    const room = rooms.get(roomCode);
+    const gameState = room.currentGameState;
+
+    if (!gameState) return;
+
+    // 检查是否所有人都猜对了
+    const guessers = room.players.filter(p => p.id !== gameState.currentDrawer);
+    if (gameState.guessedBy.length >= guessers.length) {
+      // 所有人都猜对了，开始新轮次
+      startNewRound(roomCode);
+    }
+  }
   
   // 监听发送绘画动作
   socket.on('send-drawing-action', (data) => {
@@ -183,19 +311,55 @@ io.on('connection', (socket) => {
   // 监听开始游戏
   socket.on('start-game', (data) => {
     const { roomCode } = data;
-    
+
     if (rooms.has(roomCode)) {
       const room = rooms.get(roomCode);
-      
-      // 更新游戏状态
+
+      // 随机选择第一个绘画者
+      const drawerIndex = Math.floor(Math.random() * room.players.length);
+      const drawer = room.players[drawerIndex];
+
+      // 随机选择一个单词（简单难度）
+      const words = [
+        '猫', '狗', '鱼', '鸟', '苹果', '香蕉', '钥匙', '椅子',
+        '太阳', '月亮', '足球', '篮球', '医生', '老师', '汽车',
+        '自行车', '房子', '吉他', '钢琴', '开心', '伤心', '跑步',
+        '跳跃', '唱歌', '跳舞', '树', '花', '山', '海', '门', '窗户'
+      ];
+      const currentWord = words[Math.floor(Math.random() * words.length)];
+
+      // 初始化游戏状态
+      const gameState = {
+        currentDrawer: drawer.id,
+        currentWord: currentWord,
+        roundStartTime: Date.now(),
+        roundDuration: 60, // 60秒
+        scores: {},
+        guessedBy: []
+      };
+
+      // 初始化分数
+      room.players.forEach(player => {
+        gameState.scores[player.id] = 0;
+      });
+
+      // 更新房间状态
       room.gameState = 'playing';
       room.currentRound = 1;
-      
+      room.currentGameState = gameState;
+
       // 发送游戏开始事件
-      io.to(roomCode).emit('game-started', room);
+      io.to(roomCode).emit('game-started', gameState);
       io.to(roomCode).emit('room-updated', room);
-      
-      console.log('🎮 游戏开始:', roomCode);
+
+      console.log('🎮 游戏开始:', roomCode, '- 绘画者:', drawer.nickname, '- 单词:', currentWord);
+
+      // 设置定时器检查时间结束
+      const timer = setTimeout(() => {
+        checkRoundEnd(roomCode);
+      }, gameState.roundDuration * 1000);
+
+      roundTimers.set(roomCode, timer);
     }
   });
   

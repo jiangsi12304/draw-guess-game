@@ -1,12 +1,15 @@
 import { useRef, useEffect, useState } from 'react';
 import GlassCard from '../UI/GlassCard';
 import GlowButton from '../UI/GlowButton';
+import { onSocketEvent, sendSocketDrawingAction } from '../../utils/socket';
+import type { DrawingAction } from '../../types';
 
 interface DrawingCanvasProps {
   width?: number;
   height?: number;
   onDrawingChange?: (imageData: string) => void;
   isDrawer?: boolean;
+  roomCode?: string;
 }
 
 interface DrawingState {
@@ -22,6 +25,7 @@ export default function DrawingCanvas({
   height = 500,
   onDrawingChange,
   isDrawer = true,
+  roomCode,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawingState, setDrawingState] = useState<DrawingState>({
@@ -31,6 +35,8 @@ export default function DrawingCanvas({
     history: [],
     historyIndex: -1,
   });
+
+  const [currentStroke, setCurrentStroke] = useState<{x: number, y: number}[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -42,7 +48,42 @@ export default function DrawingCanvas({
     // 设置白色背景
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
-  }, [width, height]);
+
+    // 如果不是绘画者，监听绘画动作
+    if (!isDrawer && roomCode) {
+      const unsubscribe = onSocketEvent('new-drawing-action', (action: DrawingAction) => {
+        handleRemoteAction(action, ctx);
+      });
+      return unsubscribe;
+    }
+  }, [width, height, isDrawer, roomCode]);
+
+  const handleRemoteAction = (action: DrawingAction, ctx: CanvasRenderingContext2D) => {
+    switch (action.type) {
+      case 'stroke':
+        if (action.data && action.data.length > 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = action.color || '#000000';
+          ctx.lineWidth = action.width || 3;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          const points = action.data;
+          if (points.length > 0) {
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+              ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.stroke();
+          }
+        }
+        break;
+      case 'clear':
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        break;
+    }
+  };
 
   const getCanvasContext = () => {
     const canvas = canvasRef.current;
@@ -85,6 +126,7 @@ export default function DrawingCanvas({
     if (!ctx) return;
 
     setDrawingState(prev => ({ ...prev, isDrawing: true }));
+    setCurrentStroke([{x, y}]);
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -108,11 +150,25 @@ export default function DrawingCanvas({
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
+
+    setCurrentStroke(prev => [...prev, {x, y}]);
   };
 
   const stopDrawing = () => {
     if (!drawingState.isDrawing) return;
     setDrawingState(prev => ({ ...prev, isDrawing: false }));
+
+    if (roomCode && currentStroke.length > 0) {
+      const action: DrawingAction = {
+        type: 'stroke',
+        data: [...currentStroke],
+        color: drawingState.color,
+        width: drawingState.brushSize
+      };
+      sendSocketDrawingAction(roomCode, action);
+    }
+
+    setCurrentStroke([]);
     saveToHistory();
   };
 
@@ -121,6 +177,14 @@ export default function DrawingCanvas({
     if (!ctx) return;
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
+
+    if (roomCode && isDrawer) {
+      const action: DrawingAction = {
+        type: 'clear'
+      };
+      sendSocketDrawingAction(roomCode, action);
+    }
+
     saveToHistory();
   };
 

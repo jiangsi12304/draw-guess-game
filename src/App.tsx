@@ -89,9 +89,7 @@ function App() {
 
     // 发送开始游戏命令
     startSocketGame(roomCode);
-    setRoundNumber(1);
-    setMessages([]);
-    setAppState('playing');
+    // 注意：不在本地设置状态，等待服务器的 game-started 事件
   };
 
   // 切换准备状态
@@ -117,18 +115,9 @@ function App() {
     sendSocketChatMessage(roomCode, message);
   };
 
-  // 轮次时间结束
+  // 轮次时间结束（实际由服务器控制，这里只是为了满足Timer组件的接口）
   const handleTimeUp = () => {
-    if (!currentRoom || !gameState || !roomCode) return;
-
-    if (roundNumber >= maxRounds) {
-      // 游戏结束
-      setAppState('gameEnd');
-    } else {
-      // 下一轮
-      setRoundNumber(prev => prev + 1);
-      setMessages([]);
-    }
+    // 服务器已经控制轮次切换，这里不需要做任何操作
   };
 
   // 离开房间
@@ -212,6 +201,7 @@ function App() {
             onSendMessage={handleSendMessage}
             onTimeUp={handleTimeUp}
             scores={gameState.scores || {}}
+            roomCode={roomCode || undefined}
           />
         ) : null;
 
@@ -230,9 +220,30 @@ function App() {
       setCurrentRoom(updatedRoom);
     });
 
+    // 监听游戏开始
+    const unsubscribeGameStarted = onSocketEvent('game-started', (newGameState: GameState) => {
+      setGameState(newGameState);
+      setRoundNumber(1);
+      setMessages([]);
+      setAppState('playing');
+    });
+
     // 监听游戏状态更新
     const unsubscribeGameStateUpdate = onSocketEvent('game-state-updated', (updatedGameState: GameState) => {
       setGameState(updatedGameState);
+    });
+
+    // 监听新轮次
+    const unsubscribeNewRound = onSocketEvent('new-round', (newGameState: GameState) => {
+      setGameState(newGameState);
+      setMessages([]);
+      setRoundNumber(prev => prev + 1);
+    });
+
+    // 监听游戏结束
+    const unsubscribeGameEnded = onSocketEvent('game-ended', (endedRoom: Room) => {
+      setAppState('gameEnd');
+      setCurrentRoom(endedRoom);
     });
 
     // 监听聊天消息
@@ -249,7 +260,10 @@ function App() {
     return () => {
       // 清理所有事件监听器
       unsubscribeRoomUpdate();
+      unsubscribeGameStarted();
       unsubscribeGameStateUpdate();
+      unsubscribeNewRound();
+      unsubscribeGameEnded();
       unsubscribeChatMessage();
       unsubscribeDrawingAction();
     };
