@@ -67,14 +67,23 @@ io.on('connection', (socket) => {
   
   // 监听创建房间
   socket.on('create-room', (data) => {
-    const { roomCode, hostId } = data;
+    const { roomCode, hostId, nickname, avatar } = data;
     
     if (!rooms.has(roomCode)) {
+      const hostPlayer = {
+        id: hostId,
+        nickname: nickname || '玩家' + hostId.slice(0, 4),
+        avatar: avatar || '👤',
+        score: 0,
+        isReady: true
+      };
+      
       // 创建新房间
       rooms.set(roomCode, {
+        id: roomCode,
         code: roomCode,
-        hostId,
-        players: [hostId],
+        host: hostId,
+        players: [hostPlayer],
         gameState: 'waiting',
         currentRound: 0,
         maxRounds: 5,
@@ -89,7 +98,7 @@ io.on('connection', (socket) => {
       // 加入房间
       socket.join(roomCode);
       
-      console.log('🏠 创建房间:', roomCode, 'by', hostId);
+      console.log('🏠 创建房间:', roomCode, 'by', nickname);
       
       // 发送房间创建成功事件
       socket.emit('room-created', { roomCode });
@@ -102,24 +111,35 @@ io.on('connection', (socket) => {
   
   // 监听加入房间
   socket.on('join-room', (data) => {
-    const { roomCode, userId } = data;
+    const { roomCode, userId, nickname, avatar } = data;
     
     if (rooms.has(roomCode)) {
       const room = rooms.get(roomCode);
       
-      // 如果用户不在房间中，添加到房间
-      if (!room.players.includes(userId)) {
-        room.players.push(userId);
+      // 检查用户是否已在房间中
+      const existingPlayer = room.players.find(p => p.id === userId);
+      
+      if (!existingPlayer) {
+        const newPlayer = {
+          id: userId,
+          nickname: nickname || '玩家' + userId.slice(0, 4),
+          avatar: avatar || '👤',
+          score: 0,
+          isReady: false
+        };
+        
+        // 添加到房间
+        room.players.push(newPlayer);
         
         // 加入房间
         socket.join(roomCode);
         
-        console.log('➕ 用户加入房间:', userId, '→', roomCode);
+        console.log('➕ 用户加入房间:', nickname, '→', roomCode);
         
         // 发送加入成功事件
         socket.emit('room-joined', { roomCode, room });
         io.to(roomCode).emit('room-updated', room);
-        io.to(roomCode).emit('player-joined', { userId });
+        io.to(roomCode).emit('player-joined', { userId, nickname, avatar });
       } else {
         // 用户已在房间中
         socket.emit('room-joined', { roomCode, room });
@@ -184,31 +204,40 @@ io.on('connection', (socket) => {
     const { roomCode, userId, isReady } = data;
     
     if (rooms.has(roomCode)) {
-      // 更新用户准备状态
-      io.to(roomCode).emit('player-ready', { userId, isReady });
+      const room = rooms.get(roomCode);
+      const player = room.players.find(p => p.id === userId);
       
-      console.log('🔔 用户准备:', userId, isReady ? '✅' : '❌', '→', roomCode);
+      if (player) {
+        player.isReady = isReady;
+        
+        // 广播更新
+        io.to(roomCode).emit('player-ready', { userId, isReady });
+        io.to(roomCode).emit('room-updated', room);
+        
+        console.log('🔔 用户准备:', player.nickname, isReady ? '✅' : '❌', '→', roomCode);
+      }
     }
   });
   
   // 监听离开房间
   socket.on('leave-room', (data) => {
     const { roomCode, userId } = data;
-    
+
     if (rooms.has(roomCode)) {
       const room = rooms.get(roomCode);
-      
+      const leavingPlayer = room.players.find(p => p.id === userId);
+
       // 从房间中移除用户
-      room.players = room.players.filter(id => id !== userId);
-      
+      room.players = room.players.filter(p => p.id !== userId);
+
       // 离开房间
       socket.leave(roomCode);
-      
-      console.log('➖ 用户离开房间:', userId, '→', roomCode);
-      
+
+      console.log('➖ 用户离开房间:', leavingPlayer?.nickname || userId, '→', roomCode);
+
       // 发送用户离开事件
       io.to(roomCode).emit('player-left', { userId });
-      
+
       // 如果房间为空，删除房间
       if (room.players.length === 0) {
         rooms.delete(roomCode);
@@ -219,17 +248,17 @@ io.on('connection', (socket) => {
       }
     }
   });
-  
+
   // 监听断开连接
   socket.on('disconnect', () => {
     console.log('🔴 用户断开连接:', socket.id);
-    
+
     // 更新在线用户数
     serverStatus.onlineUsers = io.engine.clientsCount;
-    
+
     // 从所有房间中移除用户
     rooms.forEach((room, roomCode) => {
-      const playerIndex = room.players.indexOf(socket.id);
+      const playerIndex = room.players.findIndex(p => p.id === socket.id);
       if (playerIndex > -1) {
         // 从房间中移除用户
         room.players.splice(playerIndex, 1);

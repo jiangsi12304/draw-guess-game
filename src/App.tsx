@@ -61,10 +61,10 @@ function App() {
     const newRoomCode = generateRoomCode();
 
     // 创建房间
-    createSocketRoom(newRoomCode, userId);
+    createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
 
     // 加入房间
-    joinSocketRoom(newRoomCode, userId);
+    joinSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
 
     setRoomCode(newRoomCode);
     setMaxRounds(maxRounds);
@@ -74,7 +74,7 @@ function App() {
   // 加入房间
   const handleJoinRoom = async (code: string) => {
     // 加入房间
-    const success = joinSocketRoom(code, userId);
+    const success = joinSocketRoom(code, userId, userNickname, getAvatarEmoji(userAvatarIndex));
     if (success) {
       setRoomCode(code);
       setAppState('lobby');
@@ -236,12 +236,12 @@ function App() {
     });
 
     // 监听聊天消息
-    const unsubscribeChatMessage = onSocketEvent('chat-message', (message: ChatMessage) => {
+    const unsubscribeChatMessage = onSocketEvent('new-chat-message', (message: ChatMessage) => {
       setMessages(prev => [...prev, message]);
     });
 
     // 监听绘画动作
-    const unsubscribeDrawingAction = onSocketEvent('drawing-action', (action: DrawingAction) => {
+    const unsubscribeDrawingAction = onSocketEvent('new-drawing-action', (action: DrawingAction) => {
       // 这里可以添加绘画动作处理逻辑
       console.log('Received drawing action:', action);
     });

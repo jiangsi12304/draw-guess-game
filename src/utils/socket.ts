@@ -78,13 +78,13 @@ export function onSocketEvent(event: string, callback: (data: any) => void) {
 }
 
 // 创建房间
-export function createSocketRoom(roomCode: string, hostId: string) {
-  return sendSocketMessage('create-room', { roomCode, hostId });
+export function createSocketRoom(roomCode: string, hostId: string, nickname: string, avatar: string) {
+  return sendSocketMessage('create-room', { roomCode, hostId, nickname, avatar });
 }
 
 // 加入房间
-export function joinSocketRoom(roomCode: string, userId: string) {
-  return sendSocketMessage('join-room', { roomCode, userId });
+export function joinSocketRoom(roomCode: string, userId: string, nickname: string, avatar: string) {
+  return sendSocketMessage('join-room', { roomCode, userId, nickname, avatar });
 }
 
 // 发送聊天消息
