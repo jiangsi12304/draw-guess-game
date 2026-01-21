@@ -9,16 +9,19 @@ let socket: Socket | null = null;
 // 连接状态
 let isConnected = false;
 
-// 连接服务器
-export function connectSocketServer(url: string = 'https://draw-guess-game-server.onrender.com') {
+// 连接服务器 - 默认使用本地开发服务器
+export function connectSocketServer(url: string = 'http://localhost:10000') {
   if (socket) {
     socket.disconnect();
   }
 
   // 创建socket连接
   socket = io(url, {
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'], // 添加 polling 作为降级方案
     timeout: 5000,
+    reconnection: true,          // 自动重连
+    reconnectionAttempts: 5,    // 最多尝试5次
+    reconnectionDelay: 1000,    // 重连延迟1秒
   });
 
   // 连接成功
