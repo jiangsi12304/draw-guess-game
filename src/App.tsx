@@ -189,11 +189,15 @@ function App() {
 
   // 渲染不同的应用状态
   const render = () => {
+    console.log('当前appState:', appState);
+
     switch (appState) {
       case 'setup':
+        console.log('渲染 UserSetup 组件');
         return <UserSetup onSetupComplete={handleUserSetup} />;
 
       case 'menu':
+        console.log('渲染 Menu 组件');
         return (
           <Menu
             playerName={userNickname}
@@ -201,6 +205,7 @@ function App() {
             onCreateRoom={() => {
               console.log('切换到创建房间页面');
               setAppState('createRoom');
+              console.log('appState已设置为createRoom');
             }}
             onJoinRoom={() => {
               console.log('切换到加入房间页面');
@@ -215,6 +220,7 @@ function App() {
         );
 
       case 'createRoom':
+        console.log('渲染 CreateRoom 组件');
         return (
           <CreateRoom
             onCreateRoom={handleCreateRoom}
@@ -223,6 +229,7 @@ function App() {
         );
 
       case 'joinRoom':
+        console.log('渲染 JoinRoom 组件');
         return (
           <JoinRoom
             onJoinRoom={handleJoinRoom}
@@ -409,7 +416,13 @@ function App() {
     };
   }, []);
 
-  return <div className="w-full min-h-screen">{render()}</div>;
+  console.log('App render, appState:', appState);
+
+  return (
+    <div className="w-full min-h-screen pointer-events-auto" style={{ position: 'relative', zIndex: 1 }}>
+      {render()}
+    </div>
+  );
 }
 
 export default App;

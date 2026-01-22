@@ -17,8 +17,8 @@ export default function Menu({
   onLogout,
 }: MenuProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
-      <div className="w-full max-w-md space-y-8 pointer-events-auto">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
+      <div className="w-full max-w-md space-y-8">
         {/* 欢迎卡片 */}
         <GlassCard className="text-center space-y-4">
           <h1 className="text-5xl font-display font-bold gradient-text">
