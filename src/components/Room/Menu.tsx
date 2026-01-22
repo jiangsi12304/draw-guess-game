@@ -17,7 +17,7 @@ export default function Menu({
   onLogout,
 }: MenuProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
       <div className="w-full max-w-md space-y-8">
         {/* 欢迎卡片 */}
         <GlassCard className="text-center space-y-4">
@@ -40,7 +40,7 @@ export default function Menu({
         </GlassCard>
 
         {/* 菜单按钮 */}
-        <div className="space-y-3">
+        <div className="space-y-3 relative z-20">
           <GlowButton onClick={onCreateRoom} className="w-full text-lg">
             ➕ 创建房间
           </GlowButton>

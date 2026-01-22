@@ -72,6 +72,8 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 9999px;
   font-weight: 600;
   transition: all 300ms ease;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .glow-btn:hover {
@@ -103,6 +105,12 @@ h1, h2, h3, h4, h5, h6 {
 /* 基础过渡 */
 button, a, input, textarea {
   transition: all 300ms ease;
+}
+
+/* 确保按钮始终可点击 */
+button {
+  pointer-events: auto !important;
+  cursor: pointer;
 }
 
 /* 输入框样式 */

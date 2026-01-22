@@ -26,7 +26,7 @@ export default function GlowButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`glow-btn ${variantStyles[variant]} ${
+      className={`glow-btn relative pointer-events-auto ${variantStyles[variant]} ${
         disabled ? 'opacity-50 cursor-not-allowed' : ''
       } ${className}`}
     >
