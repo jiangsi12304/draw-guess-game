@@ -51,10 +51,8 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
     }
   };
 
-  console.log('CreateRoom 组件正在渲染');
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 pointer-events-auto relative z-50">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-20">
       {/* Loading overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">

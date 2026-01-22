@@ -189,30 +189,24 @@ function App() {
 
   // 渲染不同的应用状态
   const render = () => {
-    console.log('当前appState:', appState);
-
     switch (appState) {
       case 'setup':
-        console.log('渲染 UserSetup 组件');
         return <UserSetup onSetupComplete={handleUserSetup} />;
 
       case 'menu':
-        console.log('渲染 Menu 组件');
         return (
           <Menu
             playerName={userNickname}
             playerAvatar={getAvatarEmoji(userAvatarIndex)}
             onCreateRoom={() => {
-              console.log('切换到创建房间页面');
+              console.log('点击创建房间');
               setAppState('createRoom');
-              console.log('appState已设置为createRoom');
             }}
             onJoinRoom={() => {
-              console.log('切换到加入房间页面');
+              console.log('点击加入房间');
               setAppState('joinRoom');
             }}
             onLogout={() => {
-              console.log('退出游戏');
               setUserNickname('');
               setAppState('setup');
             }}
@@ -220,7 +214,6 @@ function App() {
         );
 
       case 'createRoom':
-        console.log('渲染 CreateRoom 组件');
         return (
           <CreateRoom
             onCreateRoom={handleCreateRoom}
@@ -229,7 +222,6 @@ function App() {
         );
 
       case 'joinRoom':
-        console.log('渲染 JoinRoom 组件');
         return (
           <JoinRoom
             onJoinRoom={handleJoinRoom}
@@ -415,8 +407,6 @@ function App() {
       unsubscribeDrawingAction();
     };
   }, []);
-
-  console.log('App render, appState:', appState);
 
   return (
     <div className="w-full min-h-screen pointer-events-auto" style={{ position: 'relative', zIndex: 1 }}>

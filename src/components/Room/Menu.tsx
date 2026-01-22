@@ -41,31 +41,19 @@ export default function Menu({
 
         {/* 菜单按钮 */}
         <div className="space-y-3 relative z-20">
-          <GlowButton
-            onClick={() => {
-              console.log('创建房间按钮被点击');
-              onCreateRoom();
-            }}
-            className="w-full text-lg"
-          >
+          <GlowButton onClick={onCreateRoom} className="w-full text-lg">
             ➕ 创建房间
           </GlowButton>
           <GlowButton
             variant="secondary"
-            onClick={() => {
-              console.log('加入房间按钮被点击');
-              onJoinRoom();
-            }}
+            onClick={onJoinRoom}
             className="w-full text-lg"
           >
             🔗 加入房间
           </GlowButton>
           <GlowButton
             variant="secondary"
-            onClick={() => {
-              console.log('退出游戏按钮被点击');
-              onLogout();
-            }}
+            onClick={onLogout}
             className="w-full text-lg"
           >
             🚪 退出游戏
