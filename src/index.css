@@ -1,7 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
 
-
-
 @theme {
   --color-warm-pink: #FFB6C1;
   --color-warm-orange: #FFCC80;
@@ -41,16 +39,92 @@ html, body {
   overflow-x: hidden;
 }
 
+/* ========== 动态渐变背景 ========== */
 body {
-  background: linear-gradient(-45deg, #FFB6C1, #FFCC80, #E1BEE7, #B3E5FC);
-  background-size: 400% 400%;
-  animation: gradient-shift 15s ease infinite;
+  background: linear-gradient(-45deg, #FFB6C1, #FFCC80, #E1BEE7, #B3E5FC, #FFE082);
+  background-size: 500% 500%;
+  animation: gradient-flow 20s ease infinite;
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 流动渐变动画 */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ========== 粒子效果层 ========== */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 182, 193, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 204, 128, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 40% 70%, rgba(225, 190, 231, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(179, 229, 252, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 10% 90%, rgba(255, 224, 130, 0.3) 0%, transparent 40%);
+  animation: particle-float 25s ease-in-out infinite;
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translate(20px, 30px) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* ========== 噪点纹理层 ========== */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  position: relative;
+  z-index: 2;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -58,56 +132,170 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
-/* 毛玻璃效果基础 */
+/* ========== 增强玻璃拟态效果 ========== */
 .glass {
-  backdrop-filter: blur(12px);
-  background-color: var(--color-glass-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
+  backdrop-filter: blur(20px) saturate(180%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 发光按钮效果 */
+.glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  border-radius: 1.25rem 1.25rem 0 0;
+}
+
+/* ========== 发光按钮效果（增强版） ========== */
 .glow-btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 2rem;
   border-radius: 9999px;
   font-weight: 600;
-  transition: all 300ms ease;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: auto;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glow-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 400ms ease, height 400ms ease;
+}
+
+.glow-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .glow-btn:hover {
-  box-shadow: var(--shadow-glow-lg);
-  transform: scale(1.05);
+  box-shadow:
+    0 0 30px rgba(255, 182, 193, 0.6),
+    0 0 60px rgba(255, 204, 128, 0.4),
+    0 10px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px) scale(1.02);
 }
 
 .glow-btn:active {
-  transform: scale(0.95);
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 0 20px rgba(255, 182, 193, 0.4),
+    0 0 40px rgba(255, 204, 128, 0.2);
 }
 
-/* 光泽卡片 */
+.glow-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ========== 光泽卡片（增强版） ========== */
 .glossy-card {
-  backdrop-filter: blur(16px);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-/* 渐变文字 */
+.glossy-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 600ms ease;
+}
+
+.glossy-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.15),
+    0 12px 24px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.glossy-card:hover::before {
+  left: 150%;
+}
+
+/* ========== 渐变文字 ========== */
 .gradient-text {
-  background: linear-gradient(to right, var(--color-warm-pink), var(--color-warm-orange), var(--color-warm-purple));
+  background: linear-gradient(
+    135deg,
+    var(--color-warm-pink),
+    var(--color-warm-orange),
+    var(--color-warm-purple)
+  );
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: text-gradient 5s ease infinite;
 }
 
-/* 基础过渡 */
-button, a, input, textarea {
-  transition: all 300ms ease;
+@keyframes text-gradient {
+  0%, 100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 200% center;
+  }
 }
 
-/* 确保按钮始终可点击 */
+/* ========== 基础过渡 ========== */
+button, a, input, textarea, .glossy-card, .glass {
+  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== 确保按钮始终可点击 ========== */
 button {
   pointer-events: auto !important;
   cursor: pointer;
@@ -115,39 +303,187 @@ button {
   z-index: 9999;
 }
 
-/* 输入框样式 */
+/* ========== 输入框样式（增强版） ========== */
 input, textarea {
-  backdrop-filter: blur(12px);
-  background-color: var(--color-glass-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  color: #374151;
+  backdrop-filter: blur(20px) saturate(150%);
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  color: #1f2937;
   outline: none;
+  font-size: 0.95rem;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 300ms ease;
 }
 
 input:focus, textarea:focus {
-  box-shadow: 0 0 0 2px var(--color-warm-pink);
+  border-color: var(--color-warm-pink);
+  box-shadow:
+    0 0 0 3px rgba(255, 182, 193, 0.3),
+    0 0 20px rgba(255, 182, 193, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
 }
 
 input::placeholder, textarea::placeholder {
-  color: #9CA3AF;
+  color: rgba(107, 114, 128, 0.7);
+  font-weight: 400;
 }
 
-/* 滚动条美化 */
+input:hover, textarea:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ========== 滚动条美化（增强版） ========== */
 ::-webkit-scrollbar {
-  width: 0.5rem;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-warm-pink);
-  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    var(--color-warm-pink),
+    var(--color-warm-orange)
+  );
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 300ms ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-warm-orange);
+  background: linear-gradient(
+    180deg,
+    var(--color-warm-orange),
+    var(--color-warm-yellow)
+  );
+  background-clip: content-box;
+  border-width: 1px;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ========== 页面过渡动画 ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 500ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 400ms ease forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ========== 消息气泡动画 ========== */
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.message-enter {
+  animation: messageSlide 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ========== 脉冲发光效果 ========== */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(255, 182, 193, 0.5),
+      0 0 40px rgba(255, 204, 128, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(255, 182, 193, 0.7),
+      0 0 60px rgba(255, 204, 128, 0.4);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* ========== 浮动动画 ========== */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ========== 缩放脉冲动画 ========== */
+@keyframes scalePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.scale-pulse {
+  animation: scalePulse 2s ease-in-out infinite;
 }

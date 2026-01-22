@@ -244,123 +244,146 @@ function App() {
   const render = () => {
     switch (appState) {
       case 'setup':
-        return <UserSetup onSetupComplete={handleUserSetup} />;
+        return (
+          <div key="setup" className="fade-in-up">
+            <UserSetup onSetupComplete={handleUserSetup} />
+          </div>
+        );
 
       case 'menu':
         return (
-          <Menu
-            playerName={userNickname}
-            playerAvatar={getAvatarEmoji(userAvatarIndex)}
-            onCreateRoom={() => {
-              console.log('点击创建房间');
-              setAppState('createRoom');
-            }}
-            onJoinRoom={() => {
-              console.log('点击加入房间');
-              setAppState('joinRoom');
-            }}
-            onLogout={() => {
-              setUserNickname('');
-              setAppState('setup');
-            }}
-          />
+          <div key="menu" className="fade-in-up">
+            <Menu
+              playerName={userNickname}
+              playerAvatar={getAvatarEmoji(userAvatarIndex)}
+              onCreateRoom={() => {
+                console.log('点击创建房间');
+                setAppState('createRoom');
+              }}
+              onJoinRoom={() => {
+                console.log('点击加入房间');
+                setAppState('joinRoom');
+              }}
+              onLogout={() => {
+                setUserNickname('');
+                setAppState('setup');
+              }}
+            />
+          </div>
         );
 
       case 'createRoom':
         return (
-          <CreateRoom
-            onCreateRoom={handleCreateRoom}
-            onBack={() => setAppState('menu')}
-          />
+          <div key="createRoom" className="fade-in-up">
+            <CreateRoom
+              onCreateRoom={handleCreateRoom}
+              onBack={() => setAppState('menu')}
+            />
+          </div>
         );
 
       case 'joinRoom':
         return (
-          <JoinRoom
-            onJoinRoom={handleJoinRoom}
-            onBack={() => {
-              setAppState('menu');
-              setJoinError('');
-            }}
-            error={joinError}
-          />
+          <div key="joinRoom" className="fade-in-up">
+            <JoinRoom
+              onJoinRoom={handleJoinRoom}
+              onBack={() => {
+                setAppState('menu');
+                setJoinError('');
+              }}
+              error={joinError}
+            />
+          </div>
         );
 
       case 'lobby':
         return currentRoom ? (
-          <Lobby
-            roomCode={currentRoom.code}
-            players={currentRoom.players || []}
-            currentUserId={userId}
-            isHost={currentRoom.host === userId}
-            onStartGame={handleStartGame}
-            onLeave={handleLeaveRoom}
-            onToggleReady={handleToggleReady}
-            onKickPlayer={handleKickPlayer}
-          />
+          <div key="lobby" className="fade-in-up">
+            <Lobby
+              roomCode={currentRoom.code}
+              players={currentRoom.players || []}
+              currentUserId={userId}
+              isHost={currentRoom.host === userId}
+              onStartGame={handleStartGame}
+              onLeave={handleLeaveRoom}
+              onToggleReady={handleToggleReady}
+              onKickPlayer={handleKickPlayer}
+            />
+          </div>
         ) : null;
 
       case 'playing':
         return currentRoom && gameState ? (
-          <GameBoard
-            players={currentRoom.players || []}
-            currentUserId={userId}
-            currentDrawerId={gameState.currentDrawer}
-            currentWord={userId === gameState.currentDrawer ? '？' : (gameState.currentWord || '')}
-            roundNumber={roundNumber}
-            maxRounds={maxRounds}
-            roundDuration={gameState.roundDuration}
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            onTimeUp={handleTimeUp}
-            onWordSelect={handleWordSelect}
-            scores={gameState.scores || {}}
-            roomCode={roomCode || undefined}
-            revealedWord={revealedWord}
-            wordSelectionState={gameState.wordSelectionState || 'drawing'}
-            wordOptions={gameState.wordOptions || []}
-          />
+          <div key="playing" className="fade-in-up">
+            <GameBoard
+              players={currentRoom.players || []}
+              currentUserId={userId}
+              currentDrawerId={gameState.currentDrawer}
+              currentWord={userId === gameState.currentDrawer ? '？' : (gameState.currentWord || '')}
+              roundNumber={roundNumber}
+              maxRounds={maxRounds}
+              roundDuration={gameState.roundDuration}
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onTimeUp={handleTimeUp}
+              onWordSelect={handleWordSelect}
+              scores={gameState.scores || {}}
+              roomCode={roomCode || undefined}
+              revealedWord={revealedWord}
+              wordSelectionState={gameState.wordSelectionState || 'drawing'}
+              wordOptions={gameState.wordOptions || []}
+            />
+          </div>
         ) : null;
 
       case 'gameEnd':
         return currentRoom ? (
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <GlassCard className="w-full max-w-2xl text-center space-y-6">
-              <h2 className="text-4xl font-display font-bold gradient-text">🏆 游戏结束</h2>
+          <div key="gameEnd" className="min-h-screen flex items-center justify-center p-4 fade-in-up">
+            <GlassCard className="w-full max-w-2xl text-center space-y-6" hoverEffect={false}>
+              <div className="space-y-2">
+                <h2 className="text-5xl font-display font-bold gradient-text scale-pulse">🏆 游戏结束</h2>
+                <p className="text-white/70 text-lg">恭喜所有玩家完成游戏！</p>
+              </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {(currentRoom.players || [])
                   .sort((a, b) => (gameState?.scores?.[b.id] || 0) - (gameState?.scores?.[a.id] || 0))
                   .map((player, index) => (
                     <div
                       key={player.id}
-                      className={`p-4 rounded-lg flex items-center justify-between ${
+                      className={`message-enter p-4 rounded-xl flex items-center justify-between backdrop-blur-md border transition-all duration-300 hover:scale-102 ${
                         index === 0
-                          ? 'bg-gradient-to-r from-yellow-400/30 to-orange-400/30 border-2 border-yellow-400'
-                          : 'bg-glass-white'
+                          ? 'bg-gradient-to-r from-yellow-400/30 via-orange-400/30 to-yellow-400/30 border-2 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)] scale-pulse'
+                          : 'bg-gradient-to-r from-white/20 to-white/10 border border-white/20 hover:border-white/30'
                       }`}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-3xl">{player.avatar}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-4xl float" style={{ animationDelay: `${index * 0.5}s` }}>{player.avatar}</span>
                         <div className="text-left">
-                          <p className="font-bold text-white text-xl">
+                          <p className="font-bold text-white text-2xl">
                             {index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}
                             {player.nickname}
                           </p>
                           {player.id === userId && (
-                            <p className="text-sm text-gray-300">（你）</p>
+                            <span className="inline-block text-sm text-white/60 bg-white/10 px-2 py-0.5 rounded-full mt-1">
+                              （你）
+                            </span>
                           )}
                         </div>
                       </div>
-                      <p className="text-3xl font-bold text-white">
-                        {gameState?.scores?.[player.id] || 0} 分
-                      </p>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold gradient-text">
+                          {gameState?.scores?.[player.id] || 0}
+                        </p>
+                        <p className="text-xs text-white/50">分</p>
+                      </div>
                     </div>
                   ))}
               </div>
 
-              <div className="flex gap-3">
-                <GlowButton onClick={handleLeaveRoom} className="flex-1">
+              <div className="flex gap-3 pt-4">
+                <GlowButton onClick={handleLeaveRoom} className="flex-1" size="lg">
                   返回菜单
                 </GlowButton>
               </div>
