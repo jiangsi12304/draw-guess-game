@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import DrawingCanvas from '../Canvas/DrawingCanvas';
 import ChatBox from '../Chat/ChatBox';
-import Timer from './Timer';
 import ScoreBoard from './ScoreBoard';
 import WordSelection from './WordSelection';
 import GlassCard from '../UI/GlassCard';
@@ -36,10 +35,10 @@ export default function GameBoard({
   currentWord,
   roundNumber,
   maxRounds,
-  roundDuration,
+  roundDuration: _roundDuration,
   messages,
   onSendMessage,
-  onTimeUp,
+  onTimeUp: _onTimeUp,
   onWordSelect,
   scores,
   roomCode,
@@ -145,14 +144,15 @@ export default function GameBoard({
 
         {/* 右侧：计时器和排行榜 */}
         <div className="space-y-4 order-1 lg:order-2">
-          <GlassCard className="flex flex-col items-center">
+          {/* 计时器 - 后台运行，前端不显示 */}
+          {/* <GlassCard className="flex flex-col items-center">
             <Timer
-              key={roundDuration} // 当duration变化时强制重新挂载
+              key={roundDuration}
               duration={roundDuration}
               onTimeUp={onTimeUp}
               isActive={true}
             />
-          </GlassCard>
+          </GlassCard> */}
 
           <ScoreBoard scores={playerScores} currentUserId={currentUserId} />
         </div>
