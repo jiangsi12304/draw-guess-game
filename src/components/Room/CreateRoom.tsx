@@ -27,8 +27,10 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
   };
 
   const handleCreate = async () => {
+    console.log('=== CreateRoom handleCreate 开始 ===');
     console.log('创建房间按钮被点击');
     console.log('房间名称:', roomName);
+    console.log('房间参数:', { maxRounds, roundDuration, difficulty });
 
     if (!roomName.trim()) {
       console.log('房间名称为空，显示错误');
@@ -44,21 +46,26 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
         return;
       }
       console.log('使用自定义词库创建房间');
+      console.log('调用 onCreateRoom...');
       try {
         await onCreateRoom(roomName, maxRounds, roundDuration, difficulty, words);
+        console.log('onCreateRoom 调用完成');
       } catch (err: any) {
         console.error('创建房间失败:', err);
         setError(err.message || '创建房间失败');
       }
     } else {
       console.log('使用默认词库创建房间');
+      console.log('调用 onCreateRoom...');
       try {
         await onCreateRoom(roomName, maxRounds, roundDuration, difficulty);
+        console.log('onCreateRoom 调用完成');
       } catch (err: any) {
         console.error('创建房间失败:', err);
         setError(err.message || '创建房间失败');
       }
     }
+    console.log('=== CreateRoom handleCreate 完成 ===');
   };
 
   return (

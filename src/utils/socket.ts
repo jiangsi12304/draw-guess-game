@@ -61,8 +61,14 @@ export function getSocketConnectionStatus() {
 
 // 发送消息
 export function sendSocketMessage(event: string, data: any) {
+  console.log('sendSocketMessage:', { event, data });
+  console.log('Socket对象:', socket);
+  console.log('连接状态:', isConnected);
+
   if (socket && isConnected) {
+    console.log('发送消息...');
     socket.emit(event, data);
+    console.log('消息已发送');
     return true;
   }
   console.error('❌ 无法发送消息：Socket未连接');

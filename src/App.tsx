@@ -65,8 +65,16 @@ function App() {
 
   // 创建房间
   const handleCreateRoom = async (_roomName: string, maxRounds: number, roundDuration: number, difficulty: 'easy' | 'normal' | 'hard' | 'all', customWords?: string[]) => {
+    console.log('=== handleCreateRoom 开始 ===');
+    console.log('房间参数:', { _roomName, maxRounds, roundDuration, difficulty, customWords });
+    console.log('用户信息:', { userId, userNickname, userAvatarIndex });
+
     // 检查 Socket 连接状态
-    if (!getSocketConnectionStatus()) {
+    const isConnected = getSocketConnectionStatus();
+    console.log('Socket连接状态:', isConnected);
+
+    if (!isConnected) {
+      console.error('❌ Socket未连接');
       alert(`❌ 无法连接到服务器
 
 请检查：
@@ -77,8 +85,10 @@ function App() {
     }
 
     const newRoomCode = generateRoomCode();
+    console.log('生成的房间码:', newRoomCode);
 
     // 创建房间
+    console.log('调用 createSocketRoom...');
     const created = createSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex), {
       maxRounds,
       roundDuration,
@@ -86,22 +96,32 @@ function App() {
       customWords
     });
 
+    console.log('createSocketRoom 返回结果:', created);
+
     if (!created) {
+      console.error('❌ 创建房间失败');
       alert('❌ 创建房间失败，请重试');
       return;
     }
 
     // 加入房间
+    console.log('调用 joinSocketRoom...');
     const joined = joinSocketRoom(newRoomCode, userId, userNickname, getAvatarEmoji(userAvatarIndex));
-    
+
+    console.log('joinSocketRoom 返回结果:', joined);
+
     if (!joined) {
+      console.error('❌ 加入房间失败');
       alert('❌ 加入房间失败，请重试');
       return;
     }
 
+    console.log('设置房间信息到状态');
     setRoomCode(newRoomCode);
     setMaxRounds(maxRounds);
+    console.log('等待 room-updated 事件...');
     // 不在这里设置 appState，等待 room-updated 事件后再设置
+    console.log('=== handleCreateRoom 完成 ===');
   };
 
   // 加入房间
@@ -322,16 +342,27 @@ function App() {
 
   // Socket.io 连接和事件监听
   useEffect(() => {
+    console.log('App useEffect: 设置Socket事件监听');
+
     // 连接 Socket.io 服务器
     connectSocketServer();
 
     // 监听房间更新
     const unsubscribeRoomUpdate = onSocketEvent('room-updated', (updatedRoom: Room) => {
+      console.log('收到 room-updated 事件:', updatedRoom);
+      console.log('当前appState:', appState);
+
+      if (appState === 'menu') {
+        console.log('从menu切换到lobby');
+        setAppState('lobby');
+      }
+
       setCurrentRoom(updatedRoom);
     });
 
     // 监听游戏开始
     const unsubscribeGameStarted = onSocketEvent('game-started', (newGameState: GameState) => {
+      console.log('收到 game-started 事件');
       soundManager.playGameStart();
       setGameState(newGameState);
       setRoundNumber(1);
@@ -395,6 +426,7 @@ function App() {
     });
 
     return () => {
+      console.log('App useEffect cleanup: 清理事件监听器');
       // 清理所有事件监听器
       unsubscribeRoomUpdate();
       unsubscribeGameStarted();
@@ -406,7 +438,7 @@ function App() {
       unsubscribeWordSelected();
       unsubscribeDrawingAction();
     };
-  }, []);
+  }, [appState, userId, gameState]);
 
   return (
     <div className="w-full min-h-screen pointer-events-auto" style={{ position: 'relative', zIndex: 1 }}>
