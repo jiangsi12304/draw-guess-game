@@ -27,6 +27,12 @@ export default function Lobby({
   const [copied, setCopied] = useState(false);
   const [showKickConfirm, setShowKickConfirm] = useState<string | null>(null);
 
+  console.log('=== Lobby 组件渲染 ===');
+  console.log('当前用户ID:', currentUserId);
+  console.log('是否房主:', isHost);
+  console.log('玩家列表:', players);
+  console.log('是否有onToggleReady回调:', !!onToggleReady);
+
   // 获取当前用户的准备状态
   const currentPlayer = players.find(p => p.id === currentUserId);
   const isCurrentPlayerReady = currentPlayer?.isReady ?? false;
@@ -75,6 +81,14 @@ export default function Lobby({
 
   const allReady = players.length >= 2 && players.every(p => p.isReady);
 
+  const handleToggleReadyClick = (isReady: boolean) => {
+    console.log('=== Lobby handleToggleReadyClick ===');
+    console.log('点击准备按钮，新状态:', isReady);
+    console.log('调用 onToggleReady 回调...');
+    onToggleReady?.(isReady);
+    console.log('onToggleReady 回调完成');
+  };
+
   const handleKickPlayer = (playerId: string) => {
     if (showKickConfirm === playerId) {
       onKickPlayer?.(playerId);
@@ -83,6 +97,22 @@ export default function Lobby({
       setShowKickConfirm(playerId);
       setTimeout(() => setShowKickConfirm(null), 3000); // 3秒后自动取消
     }
+  };
+
+  const handleStartGame = () => {
+    console.log('=== Lobby handleStartGame ===');
+    console.log('是否所有玩家都准备好了:', allReady);
+    console.log('玩家数量:', players.length);
+    console.log('调用 onStartGame 回调...');
+    onStartGame();
+    console.log('onStartGame 回调完成');
+  };
+
+  const handleLeave = () => {
+    console.log('=== Lobby handleLeave ===');
+    console.log('调用 onLeave 回调...');
+    onLeave();
+    console.log('onLeave 回调完成');
   };
 
   return (
@@ -170,7 +200,7 @@ export default function Lobby({
           {!isHost && (
             <GlowButton
               variant={isCurrentPlayerReady ? "primary" : "secondary"}
-              onClick={() => onToggleReady?.(!isCurrentPlayerReady)}
+              onClick={() => handleToggleReadyClick(!isCurrentPlayerReady)}
               className="flex-1"
             >
               {isCurrentPlayerReady ? '✅ 已准备' : '⏳ 准备游戏'}
@@ -178,14 +208,14 @@ export default function Lobby({
           )}
           <GlowButton
             variant="secondary"
-            onClick={onLeave}
+            onClick={handleLeave}
             className="flex-1"
           >
             退出房间
           </GlowButton>
           {isHost && (
             <GlowButton
-              onClick={onStartGame}
+              onClick={handleStartGame}
               disabled={!allReady || players.length < 2}
               className="flex-1"
             >

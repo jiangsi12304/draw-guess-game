@@ -146,17 +146,40 @@ function App() {
 
   // 开始游戏
   const handleStartGame = () => {
-    if (!currentRoom || !roomCode) return;
+    console.log('=== App handleStartGame 开始 ===');
+    console.log('当前房间:', currentRoom);
+    console.log('房间码:', roomCode);
+
+    if (!currentRoom || !roomCode) {
+      console.error('❌ 房间信息不完整');
+      return;
+    }
 
     // 发送开始游戏命令
-    startSocketGame(roomCode);
+    console.log('调用 startSocketGame...');
+    const result = startSocketGame(roomCode);
+    console.log('startSocketGame 返回结果:', result);
+    console.log('等待 game-started 事件...');
     // 注意：不在本地设置状态，等待服务器的 game-started 事件
+    console.log('=== App handleStartGame 完成 ===');
   };
 
   // 切换准备状态
   const handleToggleReady = (isReady: boolean) => {
-    if (!roomCode) return;
-    readySocketGame(roomCode, userId, isReady);
+    console.log('=== handleToggleReady 开始 ===');
+    console.log('准备状态:', isReady);
+    console.log('房间码:', roomCode);
+    console.log('用户ID:', userId);
+
+    if (!roomCode) {
+      console.error('❌ 房间码为空');
+      return;
+    }
+
+    console.log('调用 readySocketGame...');
+    const result = readySocketGame(roomCode, userId, isReady);
+    console.log('readySocketGame 返回结果:', result);
+    console.log('=== handleToggleReady 完成 ===');
   };
 
   // 发送聊天消息
@@ -195,16 +218,26 @@ function App() {
 
   // 离开房间
   const handleLeaveRoom = () => {
-    if (!roomCode) return;
+    console.log('=== App handleLeaveRoom 开始 ===');
+    console.log('房间码:', roomCode);
+
+    if (!roomCode) {
+      console.error('❌ 房间码为空');
+      return;
+    }
 
     // 发送离开房间命令
-    leaveSocketRoom(roomCode, userId);
+    console.log('调用 leaveSocketRoom...');
+    const result = leaveSocketRoom(roomCode, userId);
+    console.log('leaveSocketRoom 返回结果:', result);
 
+    console.log('清理房间状态...');
     setRoomCode(null);
     setCurrentRoom(null);
     setGameState(null);
     setMessages([]);
     setAppState('menu');
+    console.log('=== App handleLeaveRoom 完成 ===');
   };
 
   // 渲染不同的应用状态
