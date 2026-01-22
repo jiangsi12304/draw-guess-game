@@ -27,25 +27,35 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
   };
 
   const handleCreate = async () => {
+    console.log('创建房间按钮被点击');
+    console.log('房间名称:', roomName);
+
     if (!roomName.trim()) {
+      console.log('房间名称为空，显示错误');
       setError('请输入房间名称');
       return;
     }
+
     if (useCustomWords && customWords.trim()) {
       const words = customWords.split(/[,，\n]/).map(w => w.trim()).filter(w => w);
       if (words.length < 10) {
+        console.log('自定义词语数量不足');
         setError('自定义词库至少需要10个词语');
         return;
       }
+      console.log('使用自定义词库创建房间');
       try {
         await onCreateRoom(roomName, maxRounds, roundDuration, difficulty, words);
       } catch (err: any) {
+        console.error('创建房间失败:', err);
         setError(err.message || '创建房间失败');
       }
     } else {
+      console.log('使用默认词库创建房间');
       try {
         await onCreateRoom(roomName, maxRounds, roundDuration, difficulty);
       } catch (err: any) {
+        console.error('创建房间失败:', err);
         setError(err.message || '创建房间失败');
       }
     }
@@ -63,7 +73,7 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
         </div>
       )}
 
-      <GlassCard className="w-full max-w-md space-y-6">
+      <GlassCard className="w-full max-w-md space-y-6" style={{ pointerEvents: 'auto' }}>
         <h2 className="text-3xl font-display font-bold text-white text-center">
           创建新房间
         </h2>
@@ -77,6 +87,7 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
               type="text"
               value={roomName}
               onChange={(e) => {
+                console.log('房间名称输入:', e.target.value);
                 setRoomName(e.target.value);
                 setError('');
               }}
@@ -183,7 +194,10 @@ export default function CreateRoom({ onCreateRoom, onBack, isLoading = false }: 
           <div className="flex gap-3">
             <GlowButton
               variant="secondary"
-              onClick={onBack}
+              onClick={() => {
+                console.log('返回按钮被点击');
+                onBack();
+              }}
               className="flex-1"
             >
               返回
