@@ -36,7 +36,7 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative w-10 h-10">
+      <div className="relative w-8 h-8">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle
             cx="50"
@@ -44,7 +44,7 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
             r="45"
             fill="none"
             stroke="rgba(255,255,255, 0.2)"
-            strokeWidth="5"
+            strokeWidth="6"
           />
           <circle
             cx="50"
@@ -52,7 +52,7 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
             r="45"
             fill="none"
             stroke={isWarning ? '#FF6B6B' : '#FFB6C1'}
-            strokeWidth="5"
+            strokeWidth="6"
             strokeDasharray={`${(percentage / 100) * 283} 283`}
             className="transition-all duration-300"
           />
