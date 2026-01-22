@@ -46,7 +46,8 @@ body {
   animation: gradient-flow 20s ease infinite;
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* 流动渐变动画 */
