@@ -351,9 +351,11 @@ function App() {
     const unsubscribeRoomUpdate = onSocketEvent('room-updated', (updatedRoom: Room) => {
       console.log('收到 room-updated 事件:', updatedRoom);
       console.log('当前appState:', appState);
+      console.log('当前房间:', currentRoom);
 
-      if (appState === 'menu') {
-        console.log('从menu切换到lobby');
+      // 如果之前没有房间信息，说明刚创建或加入房间，切换到lobby
+      if (!currentRoom && (appState === 'createRoom' || appState === 'joinRoom' || appState === 'menu')) {
+        console.log(`从${appState}切换到lobby`);
         setAppState('lobby');
       }
 
