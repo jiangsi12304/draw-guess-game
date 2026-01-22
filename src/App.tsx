@@ -383,16 +383,33 @@ function App() {
     // 监听房间更新
     const unsubscribeRoomUpdate = onSocketEvent('room-updated', (updatedRoom: Room) => {
       console.log('收到 room-updated 事件:', updatedRoom);
-      console.log('当前appState:', appState);
-      console.log('当前房间:', currentRoom);
 
-      // 如果之前没有房间信息，说明刚创建或加入房间，切换到lobby
-      if (!currentRoom && (appState === 'createRoom' || appState === 'joinRoom' || appState === 'menu')) {
-        console.log(`从${appState}切换到lobby`);
-        setAppState('lobby');
-      }
+      // 总是设置房间信息，然后在render中检查appState来决定是否切换
+      setCurrentRoom(prevRoom => {
+        const wasEmpty = !prevRoom;
+        console.log('之前的房间:', prevRoom);
+        console.log('房间是否为空:', wasEmpty);
 
-      setCurrentRoom(updatedRoom);
+        // 如果之前没有房间信息，说明刚创建或加入房间
+        if (wasEmpty) {
+          console.log('设置1秒后切换到lobby...');
+          // 使用setTimeout确保在下一个渲染周期检查状态
+          setTimeout(() => {
+            console.log('检查当前appState...');
+            // 直接检查DOM来判断当前页面
+            const titleElement = document.querySelector('h2');
+            const pageTitle = titleElement?.textContent;
+            console.log('当前页面标题:', pageTitle);
+
+            if (pageTitle === '创建新房间' || pageTitle === '加入房间') {
+              console.log('切换到lobby');
+              setAppState('lobby');
+            }
+          }, 100);
+        }
+
+        return updatedRoom;
+      });
     });
 
     // 监听游戏开始
