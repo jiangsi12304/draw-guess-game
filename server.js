@@ -109,14 +109,16 @@ const wordBank = [
   { word: '火山', difficulty: 'hard', category: '自然' },
 ];
 
-// 随机获取3个不同的词语
-function getRandomWords(count, difficulty = 'all', customWords = []) {
+// 随机获取3个不同的词语（排除已使用的词语）
+function getRandomWords(count, difficulty = 'all', customWords = [], usedWords = []) {
   let availableWords = wordBank;
 
   // 如果有自定义词语，优先使用
   if (customWords && customWords.length > 0) {
-    const shuffled = [...customWords].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, Math.min(count, customWords.length)).map(word => ({
+    // 过滤掉已使用的自定义词语
+    const unusedCustomWords = customWords.filter(word => !usedWords.includes(word));
+    const shuffled = [...unusedCustomWords].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, unusedCustomWords.length)).map(word => ({
       word,
       difficulty: 'normal',
       category: '自定义'
@@ -127,6 +129,9 @@ function getRandomWords(count, difficulty = 'all', customWords = []) {
   if (difficulty !== 'all') {
     availableWords = wordBank.filter(w => w.difficulty === difficulty);
   }
+
+  // 过滤掉已使用的词语
+  availableWords = availableWords.filter(w => !usedWords.includes(w.word));
 
   const shuffled = [...availableWords].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, Math.min(count, availableWords.length));
@@ -218,7 +223,8 @@ io.on('connection', (socket) => {
         drawings: [],
         difficulty,
         customWords,
-        roundDuration
+        roundDuration,
+        usedWords: [] // 记录本局已使用过的词语
       });
 
       // 更新活跃房间数
@@ -381,8 +387,8 @@ io.on('connection', (socket) => {
     const nextDrawerIndex = room.players.length > 0 ? (currentDrawerIndex + 1) % room.players.length : 0;
     const nextDrawer = room.players[nextDrawerIndex];
 
-    // 随机选择3个候选词语
-    const wordOptions = getRandomWords(3, room.difficulty, room.customWords);
+    // 随机选择3个候选词语（排除已使用的词语）
+    const wordOptions = getRandomWords(3, room.difficulty, room.customWords, room.usedWords);
 
     // 创建新游戏状态 - 进入词语选择状态
     const newGameState = {
@@ -466,6 +472,10 @@ io.on('connection', (socket) => {
           gameState.roundStartTime = Date.now();
           gameState.wordSelectionState = 'drawing';
 
+          // 将词语添加到已使用列表（本局不再出现）
+          if (!room.usedWords) room.usedWords = [];
+          room.usedWords.push(word);
+
           // 广播词语选择
           io.to(roomCode).emit('word-selected', { word, drawerId: userId });
           io.to(roomCode).emit('game-state-updated', gameState);
@@ -544,8 +554,8 @@ io.on('connection', (socket) => {
       const drawerIndex = Math.floor(Math.random() * room.players.length);
       const drawer = room.players[drawerIndex];
 
-      // 随机选择3个候选词语
-      const wordOptions = getRandomWords(3, room.difficulty, room.customWords);
+      // 随机选择3个候选词语（排除已使用的词语）
+      const wordOptions = getRandomWords(3, room.difficulty, room.customWords, room.usedWords || []);
 
       // 初始化游戏状态 - 词语选择状态
       const gameState = {
