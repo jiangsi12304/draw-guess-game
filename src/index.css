@@ -111,6 +111,8 @@ button, a, input, textarea {
 button {
   pointer-events: auto !important;
   cursor: pointer;
+  position: relative;
+  z-index: 9999;
 }
 
 /* 输入框样式 */

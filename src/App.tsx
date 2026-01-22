@@ -198,9 +198,16 @@ function App() {
           <Menu
             playerName={userNickname}
             playerAvatar={getAvatarEmoji(userAvatarIndex)}
-            onCreateRoom={() => setAppState('createRoom')}
-            onJoinRoom={() => setAppState('joinRoom')}
+            onCreateRoom={() => {
+              console.log('切换到创建房间页面');
+              setAppState('createRoom');
+            }}
+            onJoinRoom={() => {
+              console.log('切换到加入房间页面');
+              setAppState('joinRoom');
+            }}
             onLogout={() => {
+              console.log('退出游戏');
               setUserNickname('');
               setAppState('setup');
             }}

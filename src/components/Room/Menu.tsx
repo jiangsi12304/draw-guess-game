@@ -17,8 +17,8 @@ export default function Menu({
   onLogout,
 }: MenuProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
+      <div className="w-full max-w-md space-y-8 pointer-events-auto">
         {/* 欢迎卡片 */}
         <GlassCard className="text-center space-y-4">
           <h1 className="text-5xl font-display font-bold gradient-text">
@@ -41,19 +41,31 @@ export default function Menu({
 
         {/* 菜单按钮 */}
         <div className="space-y-3 relative z-20">
-          <GlowButton onClick={onCreateRoom} className="w-full text-lg">
+          <GlowButton
+            onClick={() => {
+              console.log('创建房间按钮被点击');
+              onCreateRoom();
+            }}
+            className="w-full text-lg"
+          >
             ➕ 创建房间
           </GlowButton>
           <GlowButton
             variant="secondary"
-            onClick={onJoinRoom}
+            onClick={() => {
+              console.log('加入房间按钮被点击');
+              onJoinRoom();
+            }}
             className="w-full text-lg"
           >
             🔗 加入房间
           </GlowButton>
           <GlowButton
             variant="secondary"
-            onClick={onLogout}
+            onClick={() => {
+              console.log('退出游戏按钮被点击');
+              onLogout();
+            }}
             className="w-full text-lg"
           >
             🚪 退出游戏
