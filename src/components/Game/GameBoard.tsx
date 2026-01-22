@@ -148,6 +148,7 @@ export default function GameBoard({
           <GlassCard className="flex flex-col items-center">
             <h3 className="text-lg font-display font-bold text-white mb-4">⏱️ 时间</h3>
             <Timer
+              key={roundDuration} // 当duration变化时强制重新挂载
               duration={roundDuration}
               onTimeUp={onTimeUp}
               isActive={true}

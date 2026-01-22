@@ -429,10 +429,12 @@ function App() {
 
     // 监听新轮次
     const unsubscribeNewRound = onSocketEvent('new-round', (newGameState: GameState) => {
+      console.log('收到 new-round 事件:', newGameState);
       soundManager.playRoundChange();
       setGameState(newGameState);
       setMessages([]);
       setRoundNumber(prev => prev + 1);
+      setRevealedWord(null); // 清除上一轮的答案揭晓
     });
 
     // 监听游戏结束

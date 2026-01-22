@@ -10,13 +10,20 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
   const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
+    console.log('Timer duration changed, resetting timeLeft to:', duration);
+    setTimeLeft(duration);
+  }, [duration]);
+
+  useEffect(() => {
     if (!isActive || timeLeft <= 0) return;
 
+    console.log('Timer counting down, timeLeft:', timeLeft);
     const timer = setTimeout(() => {
       const newTime = timeLeft - 1;
       setTimeLeft(newTime);
 
       if (newTime === 0) {
+        console.log('Timer reached 0, calling onTimeUp');
         onTimeUp?.();
       }
     }, 1000);
@@ -24,23 +31,19 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
     return () => clearTimeout(timer);
   }, [timeLeft, isActive, onTimeUp]);
 
-  useEffect(() => {
-    setTimeLeft(duration);
-  }, [duration]);
-
   const percentage = (timeLeft / duration) * 100;
   const isWarning = timeLeft <= 10;
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative w-16 h-16">
+      <div className="relative w-12 h-12">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle
             cx="50"
             cy="50"
             r="45"
             fill="none"
-            stroke="rgba(255, 255, 255, 0.2)"
+            stroke="rgba(255,255,255, 0.2)"
             strokeWidth="4"
           />
           <circle
@@ -56,7 +59,7 @@ export default function Timer({ duration, onTimeUp, isActive = true }: TimerProp
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className={`text-xl font-bold font-display ${
+            className={`text-lg font-bold font-display ${
               isWarning ? 'text-red-400 animate-pulse' : 'text-white'
             }`}
           >
