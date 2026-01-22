@@ -473,7 +473,7 @@ function App() {
       unsubscribeWordSelected();
       unsubscribeDrawingAction();
     };
-  }, [appState, userId, gameState]);
+  }, [userId]); // 只依赖userId，避免频繁重连
 
   return (
     <div className="w-full min-h-screen pointer-events-auto" style={{ position: 'relative', zIndex: 1 }}>
