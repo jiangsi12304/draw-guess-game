@@ -146,9 +146,6 @@ export default function GameBoard({
         {/* 右侧：计时器和排行榜 */}
         <div className="space-y-4 order-1 lg:order-2">
           <GlassCard className="flex flex-col items-center">
-            <h3 className="text-lg font-display font-bold text-white mb-4">
-              <span className="text-base">⏱️</span> 时间
-            </h3>
             <Timer
               key={roundDuration} // 当duration变化时强制重新挂载
               duration={roundDuration}
